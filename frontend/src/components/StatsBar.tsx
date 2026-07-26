@@ -1,0 +1,60 @@
+import { GearIcon, PickaxeIcon, FactoryIcon } from "./Icons";
+import type { GameState } from "../lib/useGame";
+import { formatHashrate, formatStack } from "../lib/format";
+import { sprites } from "../assets";
+
+export function StatsBar({ state }: { state: GameState | null }) {
+  if (!state) {
+    return (
+      <div className="grid grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="panel-elevated animate-pulse h-20" />
+        ))}
+      </div>
+    );
+  }
+
+  const networkShare = state.totalNetworkHashrate > 0
+    ? (state.playerHashrate / state.totalNetworkHashrate) * 100
+    : 0;
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="panel-elevated">
+        <div className="flex items-center gap-2 mb-1">
+          <PickaxeIcon className="w-4 h-4 text-accent" />
+          <span className="stat-label">Your Hashrate</span>
+        </div>
+        <div className="stat-value">{formatHashrate(state.playerHashrate)}</div>
+        <div className="text-xs text-muted">{networkShare.toFixed(3)}% of network</div>
+      </div>
+
+      <div className="panel-elevated">
+        <div className="flex items-center gap-2 mb-1">
+          <img src={sprites.tokenIcon} alt="STACK" className="w-5 h-5 pixelated" />
+          <span className="stat-label">Pending STACK</span>
+        </div>
+        <div className="stat-value text-accent">{formatStack(state.pendingRewards.toString())}</div>
+        <div className="text-xs text-muted">{state.emissionRatePerSec > 0 ? `${formatStack(state.emissionRatePerSec.toString())}/sec total` : ""}</div>
+      </div>
+
+      <div className="panel-elevated">
+        <div className="flex items-center gap-2 mb-1">
+          <FactoryIcon className="w-4 h-4 text-accent" />
+          <span className="stat-label">Network Hash</span>
+        </div>
+        <div className="stat-value">{formatHashrate(state.totalNetworkHashrate)}</div>
+        <div className="text-xs text-muted">{formatStack(state.totalMinted.toString())} minted</div>
+      </div>
+
+      <div className="panel-elevated">
+        <div className="flex items-center gap-2 mb-1">
+          <img src={sprites.tokenIcon} alt="STACK" className="w-5 h-5 pixelated" />
+          <span className="stat-label">STACK Balance</span>
+        </div>
+        <div className="stat-value">{formatStack(state.stackBalance.toString())}</div>
+        <div className="text-xs text-muted">{state.minerCount} miners</div>
+      </div>
+    </div>
+  );
+}
