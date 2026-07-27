@@ -59,12 +59,13 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
         </div>
       </div>
 
-      {/* Grid — drawn on the workshop floor art */}
+      {/* Grid — drawn inside the workshop board art (inner field is ~12% inset) */}
       <div
-        className="relative p-[9%] pixelated aspect-square max-w-sm mx-auto"
+        className="relative pixelated aspect-square max-w-sm mx-auto"
         style={{
           backgroundImage: `url(${uiPanels.gridPanel})`,
           backgroundSize: "100% 100%",
+          padding: "12.5% 12.5% 11% 12.5%",
         }}
       >
         <div
@@ -80,10 +81,10 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
                 onClick={() => !occupied && toggleCell(idx)}
                 className={`aspect-square flex items-center justify-center transition-colors duration-100 ${
                   occupied
-                    ? "bg-black/30"
+                    ? "bg-[#0c0e07]/95 [box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.25)]"
                     : selected
-                      ? "border-2 border-secondary bg-secondary-soft"
-                      : "border border-white/5 bg-black/25 hover:border-accent/50 hover:bg-black/40"
+                      ? "bg-[#0c0e07]/95 [box-shadow:inset_0_0_0_2px_#9dff5e]"
+                      : "bg-[#0c0e07]/80 [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-[#0c0e07]/95 hover:[box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.5)]"
                 }`}
               >
                 {occupied ? (
