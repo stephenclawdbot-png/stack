@@ -1,25 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {StackToken} from "./StackToken.sol";
 import {MinerNFT} from "./MinerNFT.sol";
 
 /// @title Stack Refinery — on-chain idle mining game
 /// @notice Players open a facility, place drill rigs on a grid, and earn STACK
 ///         every second proportional to their share of network hashrate.
 ///
-/// Emission: 300K STACK/day at launch, halving every 13,680,000 seconds
-/// (~158.3 days). Rewards use a masterchef-style accumulator integrated
-/// piecewise across halving boundaries.
+/// STACK is an external fixed-supply token (1B, launched on ponz.family), so
+/// the game cannot mint. Rewards are paid from a treasury held by this
+/// contract: fund it with STACK (fundRewards or a plain transfer) and claims
+/// draw it down. If the pool runs dry, claims are clipped to what's left —
+/// pending accrual is preserved and becomes claimable again when refunded.
+///
+/// Burns send tokens to 0xdEaD (fixed-supply launchpad tokens have no burn),
+/// and the 25% game cut of purchases recycles straight into the reward pool.
+///
+/// Emission: `initialRatePerSec` at launch (default 3M STACK/day), halving
+/// every 13,680,000 seconds (~158.3 days). Rewards use a masterchef-style
+/// accumulator integrated piecewise across halving boundaries.
 ///
 /// Referrals: 4.5% of every gross claim is carved out. The direct referrer
 /// earns 1–3% (by tier), the second-level referrer earns half the direct
 /// reward, and the remainder goes to the dev wallet. Players always receive
-/// 95.5% of gross. With no referrer the full 4.5% stays in the game balance.
+/// 95.5% of gross. With no referrer the full 4.5% stays in the reward pool.
 contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     // ------------------------------------------------------------------
     // Config constants
     // ------------------------------------------------------------------
@@ -28,10 +40,11 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant UPGRADE_COOLDOWN = 24 hours;
     uint256 public constant REMOVAL_COOLDOWN = 24 hours;
     uint256 public constant PRECISION = 1e12;
+    address public constant DEAD = 0x000000000000000000000000000000000000dEaD;
 
     uint256 public constant REFERRAL_CUT_BPS = 450; // total carve-out
-    uint256 public constant TIER2_THRESHOLD = 50_000e18; // gross referred
-    uint256 public constant TIER3_THRESHOLD = 250_000e18;
+    uint256 public constant TIER2_THRESHOLD = 500_000e18; // gross referred
+    uint256 public constant TIER3_THRESHOLD = 2_500_000e18;
 
     struct MinerTierInfo {
         uint256 hashrate;
@@ -53,7 +66,7 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     // External contracts / wallets
     // ------------------------------------------------------------------
 
-    StackToken public immutable stackToken;
+    IERC20 public immutable stackToken;
     MinerNFT public immutable minerNFT;
     address public devWallet;
     uint256 public entryFee = 0.001 ether;
@@ -67,6 +80,10 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     uint256 public accPerHash; // scaled by PRECISION
     uint256 public lastAccUpdate;
     uint256 public totalNetworkHashrate;
+
+    // Treasury accounting
+    uint256 public totalRewardsPaid; // cumulative gross claims
+    uint256 public totalBurned; // cumulative sent to DEAD by the game
 
     // ------------------------------------------------------------------
     // Player state
@@ -110,6 +127,7 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     event MinerRemoved(address indexed player, uint256 tokenId);
     event FacilityUpgraded(address indexed player, uint8 newTier);
     event RewardsClaimed(address indexed player, uint256 net, uint256 gross);
+    event RewardsFunded(address indexed funder, uint256 amount);
     event ReferralPaid(address indexed referrer, address indexed source, uint256 amount);
     event ReferralCodeCreated(address indexed player, string code);
 
@@ -134,29 +152,56 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     error Cooldown();
     error MaxTier();
     error NothingToClaim();
+    error ZeroAddress();
 
-    constructor(address stackToken_, address minerNFT_, address devWallet_)
-        Ownable(msg.sender)
-    {
-        stackToken = StackToken(stackToken_);
+    constructor(
+        address stackToken_,
+        address minerNFT_,
+        address devWallet_,
+        uint256 initialRatePerSec_
+    ) Ownable(msg.sender) {
+        if (stackToken_ == address(0) || minerNFT_ == address(0) || devWallet_ == address(0)) {
+            revert ZeroAddress();
+        }
+        stackToken = IERC20(stackToken_);
         minerNFT = MinerNFT(minerNFT_);
         devWallet = devWallet_;
 
         launchTime = block.timestamp;
         lastAccUpdate = block.timestamp;
-        initialRatePerSec = 300_000e18 / uint256(86_400); // 300K/day
+        // default: 3M STACK/day (1B-supply scale)
+        initialRatePerSec = initialRatePerSec_ == 0
+            ? 3_000_000e18 / uint256(86_400)
+            : initialRatePerSec_;
 
         minerTiers[0] = MinerTierInfo(1, 0, 1, 1); // T0 Hand Drill (free)
-        minerTiers[1] = MinerTierInfo(5, 100e18, 1, 3); // T1 Drill Rig
-        minerTiers[2] = MinerTierInfo(25, 500e18, 1, 8); // T2 Pump Jack
-        minerTiers[3] = MinerTierInfo(100, 2_000e18, 4, 20); // T3 Excavator
-        minerTiers[4] = MinerTierInfo(500, 8_000e18, 4, 60); // T4 Mega Rig
+        minerTiers[1] = MinerTierInfo(5, 1_000e18, 1, 3); // T1 Drill Rig
+        minerTiers[2] = MinerTierInfo(25, 5_000e18, 1, 8); // T2 Pump Jack
+        minerTiers[3] = MinerTierInfo(100, 20_000e18, 4, 20); // T3 Excavator
+        minerTiers[4] = MinerTierInfo(500, 80_000e18, 4, 60); // T4 Mega Rig
 
         facilityTiers[1] = FacilityTierInfo(2, 10, 0); // Starter Site
-        facilityTiers[2] = FacilityTierInfo(3, 25, 1_000e18); // Small Refinery
-        facilityTiers[3] = FacilityTierInfo(4, 60, 5_000e18); // Medium Refinery
-        facilityTiers[4] = FacilityTierInfo(5, 150, 20_000e18); // Large Refinery
-        facilityTiers[5] = FacilityTierInfo(6, 400, 100_000e18); // Mega Refinery
+        facilityTiers[2] = FacilityTierInfo(3, 25, 10_000e18); // Small Refinery
+        facilityTiers[3] = FacilityTierInfo(4, 60, 50_000e18); // Medium Refinery
+        facilityTiers[4] = FacilityTierInfo(5, 150, 200_000e18); // Large Refinery
+        facilityTiers[5] = FacilityTierInfo(6, 400, 1_000_000e18); // Mega Refinery
+    }
+
+    // ------------------------------------------------------------------
+    // Treasury
+    // ------------------------------------------------------------------
+
+    /// @notice Current reward pool balance (also grows from the 25% game cut
+    ///         of purchases and no-referrer carve-outs staying put).
+    function rewardPool() public view returns (uint256) {
+        return stackToken.balanceOf(address(this));
+    }
+
+    /// @notice Top up the reward pool. Anyone can fund. A direct ERC-20
+    ///         transfer to this contract works too; this just adds an event.
+    function fundRewards(uint256 amount) external {
+        stackToken.safeTransferFrom(msg.sender, address(this), amount);
+        emit RewardsFunded(msg.sender, amount);
     }
 
     // ------------------------------------------------------------------
@@ -269,8 +314,9 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         emit FacilityOpened(msg.sender, ref);
     }
 
-    /// @notice Buy a miner NFT with STACK. 75% of the price is burned,
-    ///         25% stays in the game balance. The rig still needs placing.
+    /// @notice Buy a miner NFT with STACK. 75% of the price is burned (sent
+    ///         to 0xdEaD), 25% recycles into the reward pool. The rig still
+    ///         needs placing.
     function buyMiner(uint8 tier) external whenNotPaused nonReentrant {
         if (tier < 1 || tier > 4) revert InvalidTier();
         Facility storage f = facilities[msg.sender];
@@ -278,10 +324,10 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
 
         uint256 price = minerTiers[tier].price;
         uint256 burnAmount = (price * 75) / 100;
-        uint256 gameAmount = price - burnAmount;
 
-        stackToken.burnFrom(msg.sender, burnAmount);
-        stackToken.transferFrom(msg.sender, address(this), gameAmount);
+        stackToken.safeTransferFrom(msg.sender, DEAD, burnAmount);
+        stackToken.safeTransferFrom(msg.sender, address(this), price - burnAmount);
+        totalBurned += burnAmount;
 
         uint256 tokenId = minerNFT.mint(msg.sender, tier);
         emit MinerPurchased(msg.sender, tier, tokenId);
@@ -347,7 +393,7 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Upgrade the facility to the next tier (24h cooldown).
-    ///         Cost is paid in STACK: 75% burned, 25% to game balance.
+    ///         Cost is paid in STACK: 75% burned, 25% to the reward pool.
     function upgradeFacility() external whenNotPaused nonReentrant {
         Facility storage f = facilities[msg.sender];
         if (!f.exists) revert NoFacility();
@@ -358,17 +404,19 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
 
         uint256 cost = facilityTiers[f.tier + 1].upgradeCost;
         uint256 burnAmount = (cost * 75) / 100;
-        stackToken.burnFrom(msg.sender, burnAmount);
-        stackToken.transferFrom(msg.sender, address(this), cost - burnAmount);
+        stackToken.safeTransferFrom(msg.sender, DEAD, burnAmount);
+        stackToken.safeTransferFrom(msg.sender, address(this), cost - burnAmount);
+        totalBurned += burnAmount;
 
         f.tier += 1;
         f.lastUpgrade = block.timestamp;
         emit FacilityUpgraded(msg.sender, f.tier);
     }
 
-    /// @notice Claim pending STACK. Routes the 4.5% referral carve-out and
-    ///         mints the remaining 95.5% to the player. If the 100M cap is
-    ///         nearly reached, the claim is clipped to what remains.
+    /// @notice Claim pending STACK from the reward pool. Routes the 4.5%
+    ///         referral carve-out and transfers the remaining 95.5% to the
+    ///         player. If the pool is short, the claim is clipped to the
+    ///         pool balance and the rest stays pending.
     function claimRewards() external whenNotPaused nonReentrant {
         Facility storage f = facilities[msg.sender];
         if (!f.exists) revert NoFacility();
@@ -377,11 +425,12 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         uint256 gross = f.unclaimed;
         if (gross == 0) revert NothingToClaim();
 
-        uint256 mintable = stackToken.remainingMintable();
-        if (gross > mintable) gross = mintable;
+        uint256 pool = rewardPool();
+        if (gross > pool) gross = pool;
         if (gross == 0) revert NothingToClaim();
         f.unclaimed -= gross;
         f.lastClaim = block.timestamp;
+        totalRewardsPaid += gross;
 
         uint256 cut = (gross * REFERRAL_CUT_BPS) / 10_000;
         uint256 net = gross - cut;
@@ -394,22 +443,20 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
             uint256 secondAmt = directAmt / 2;
             address second = referrer[direct];
 
-            stackToken.mint(direct, directAmt);
+            stackToken.safeTransfer(direct, directAmt);
             emit ReferralPaid(direct, msg.sender, directAmt);
 
             if (second != address(0)) {
-                stackToken.mint(second, secondAmt);
+                stackToken.safeTransfer(second, secondAmt);
                 emit ReferralPaid(second, msg.sender, secondAmt);
             }
 
             uint256 devAmt = cut - directAmt - (second != address(0) ? secondAmt : 0);
-            if (devAmt > 0) stackToken.mint(devWallet, devAmt);
-        } else {
-            // No referrer: the full carve-out stays in the game balance.
-            stackToken.mint(address(this), cut);
+            if (devAmt > 0) stackToken.safeTransfer(devWallet, devAmt);
         }
+        // No referrer: the full carve-out simply stays in the reward pool.
 
-        stackToken.mint(msg.sender, net);
+        stackToken.safeTransfer(msg.sender, net);
         emit RewardsClaimed(msg.sender, net, gross);
     }
 
@@ -482,14 +529,6 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         return facilities[player].lastClaim;
     }
 
-    function totalMinted() external view returns (uint256) {
-        return stackToken.totalMinted();
-    }
-
-    function totalBurned() external view returns (uint256) {
-        return stackToken.totalBurned();
-    }
-
     function referralCode(address player) external view returns (string memory) {
         return _referralCode[player];
     }
@@ -537,6 +576,7 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     }
 
     function setDevWallet(address wallet) external onlyOwner {
+        if (wallet == address(0)) revert ZeroAddress();
         devWallet = wallet;
     }
 

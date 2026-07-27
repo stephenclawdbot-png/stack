@@ -71,21 +71,32 @@ stack-refinery/
 5. **Claim & compound**: Claim STACK, buy stronger miners, upgrade facility
 
 ### Tokenomics
-- **STACK**: ERC-20, 18 decimals, 100M max supply
-- **Premint**: 5M STACK for launch liquidity (to deployer)
-- **Emission**: 300K STACK/day at launch
+- **STACK**: external fixed-supply ERC-20, 18 decimals, **1B supply,
+  launched on ponz.family** (pons.family — pump.fun-style launchpad on
+  Robinhood Chain; bonding curve, graduates at 4.2 ETH). The game CANNOT
+  mint it.
+- **Treasury model**: the deployer acquires STACK (dev buy on the curve)
+  and funds StackRefinery via `fundRewards()` or a plain transfer. All
+  rewards are paid from this pool; claims are clipped to pool balance
+  (pending accrual is preserved and claimable after a refund).
+- **Emission**: 3M STACK/day at launch (constructor-configurable via
+  EMISSION_PER_DAY env at deploy — size it to the treasury you actually
+  hold; at 3M/day the lifetime schedule sums to ~950M)
 - **Halving**: Every 13,680,000 seconds (~158.3 days)
-- **Burn**: 75% of miner purchases burned forever, 25% to game balance
-- **Cap accounting**: Burned tokens still count against the 100M cap
+- **Burn**: 75% of miner purchases sent to 0xdEaD forever, 25% recycles
+  into the reward pool (launchpad tokens have no burn function)
 
 ### Miner Tiers
 | Tier | Name | Hashrate | Price (STACK) | Cells | Power Draw | NFT? |
 |------|------|----------|-------------|-------|-----------|------|
 | T0 | Hand Drill | 1 | Free | 1 | 1 | No |
-| T1 | Drill Rig | 5 | 100 | 1 | 3 | Yes |
-| T2 | Pump Jack | 25 | 500 | 1 | 8 | Yes |
-| T3 | Excavator | 100 | 2,000 | 4 (2x2) | 20 | Yes |
-| T4 | Mega Rig | 500 | 8,000 | 4 (2x2) | 60 | Yes |
+| T1 | Drill Rig | 5 | 1,000 | 1 | 3 | Yes |
+| T2 | Pump Jack | 25 | 5,000 | 1 | 8 | Yes |
+| T3 | Excavator | 100 | 20,000 | 4 (2x2) | 20 | Yes |
+| T4 | Mega Rig | 500 | 80,000 | 4 (2x2) | 60 | Yes |
+
+All STACK amounts are ×10 the original 100M-supply design, matching the
+1B fixed supply of a ponz.family launch.
 
 Power draw per tier was unspecified in the original design; the values above
 are now canonical (implemented in StackRefinery.sol). They size facility
@@ -96,10 +107,10 @@ Site's 10 power fits the Hand Drill + one T2, or Hand Drill + three T1s).
 | Tier | Name | Grid | Cells | Power | Upgrade Cost |
 |------|------|------|-------|-------|------------|
 | 1 | Starter Site | 2x2 | 4 | 10 | - |
-| 2 | Small Refinery | 3x3 | 9 | 25 | 1,000 STACK |
-| 3 | Medium Refinery | 4x4 | 16 | 60 | 5,000 STACK |
-| 4 | Large Refinery | 5x5 | 25 | 150 | 20,000 STACK |
-| 5 | Mega Refinery | 6x6 | 36 | 400 | 100,000 STACK |
+| 2 | Small Refinery | 3x3 | 9 | 25 | 10,000 STACK |
+| 3 | Medium Refinery | 4x4 | 16 | 60 | 50,000 STACK |
+| 4 | Large Refinery | 5x5 | 25 | 150 | 200,000 STACK |
+| 5 | Mega Refinery | 6x6 | 36 | 400 | 1,000,000 STACK |
 
 - Upgrade cooldown: 24 hours
 - Each miner consumes power. Facility power limits how many miners you can place.
@@ -117,20 +128,19 @@ Site's 10 power fits the Hand Drill + one T2, or Hand Drill + three T1s).
 | Tier | Rate | Threshold (gross referred STACK) |
 |------|------|-------------------------------|
 | 1 | 1.0% | 0+ |
-| 2 | 1.75% | 50,000+ |
-| 3 | 3.0% | 250,000+ |
+| 2 | 1.75% | 500,000+ |
+| 3 | 3.0% | 2,500,000+ |
 
 - Self-referrals and two-wallet loops rejected on-chain
 
 ## Contracts to Write
 
-### StackToken.sol
-- ERC-20 with 18 decimals
-- 100M max supply (100,000,000 * 1e18)
-- `mint(address to, uint256 amount)` - only callable by StackRefinery
-- `burn(uint256 amount)` - public burnable
-- `burnFrom(address, uint256)` - approve-and-burn
-- Track `totalMinted` and `totalBurned` (burned counts against cap)
+### STACK token (NOT ours — launched on ponz.family)
+- Fixed 1B supply, standard ERC-20, no mint/burn hooks for the game
+- Launch flow: create the token on ponz.family, dev-buy an allocation on
+  the bonding curve for the game treasury, then fund StackRefinery
+- `MockStack.sol` stands in for it in tests and testnet dry-runs
+  (1B minted to deployer)
 
 ### MinerNFT.sol
 - ERC-721 with minting
@@ -149,11 +159,15 @@ Site's 10 power fits the Hand Drill + one T2, or Hand Drill + three T1s).
   - `removeMiner(uint256 tokenId)` - remove from grid (24h cooldown)
   - `upgradeFacility()` - upgrade to next tier (24h cooldown, pay STACK)
   - `createReferralCode(string code)` - one per wallet, permanent
+  - `fundRewards(uint256)` - top up the reward pool (anyone; plain
+    transfers work too)
   - Emission calculation: `pending = hashrateShare * elapsed * rate`
   - Halving logic: rate halves every 13,680,000 seconds
-  - Cap enforcement: no minting past 100M (burned counts)
-  - Referral routing on claim
-  - View functions for all game state
+  - Treasury enforcement: claims clipped to `rewardPool()` (contract's
+    token balance); remainder stays pending
+  - Referral routing on claim (paid by transfer from the pool)
+  - View functions for all game state (incl. rewardPool, totalRewardsPaid,
+    totalBurned)
 
 ## Visual Design
 
@@ -231,12 +245,20 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - **The free T0 Hand Drill** is virtual (not an NFT), auto-placed at cell
   (0,0) on entry, and cannot be removed.
 - **Buying/upgrading requires STACK approval** — the game pulls funds via
-  `burnFrom`/`transferFrom`. The frontend `useGame` hook auto-approves
-  (max allowance) before `buyMiner`/`upgradeFacility`.
-- **Cap clipping**: claims are clipped to `remainingMintable()`; emission
-  effectively ends when 100M total minted is reached.
-- **Token/NFT wiring is one-shot**: `setRefinery()` can only be called once
-  on each of StackToken and MinerNFT.
+  `transferFrom` (75% to 0xdEaD, 25% to itself). The frontend `useGame`
+  hook auto-approves (max allowance) before `buyMiner`/`upgradeFacility`.
+- **Treasury model (ponz.family pivot)**: STACK is external and fixed
+  supply — the game holds a reward pool instead of minting. Claims are
+  clipped to `rewardPool()`; unpaid remainder stays pending and becomes
+  claimable after refunding. `emissionRatePerSec` is a constructor param
+  (EMISSION_PER_DAY env in deploy script) — SIZE IT TO THE TREASURY: at
+  3M/day the lifetime schedule sums to ~950M STACK, which assumes the
+  game treasury holds most of the supply. If the dev-buy allocation is
+  smaller, lower the emission accordingly or the pool will drain and
+  claims will stall until refunded.
+- **NFT wiring is one-shot**: `setRefinery()` can only be called once on
+  MinerNFT.
+- **SafeERC20 everywhere** — launchpad token implementations vary.
 
 ## Build Phases
 
@@ -261,14 +283,14 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [x] Download assets to frontend/src/assets/
 - [x] Wire sprites into UI components
 
-### Phase 3: Solidity Contracts [DONE]
+### Phase 3: Solidity Contracts [DONE — reworked for ponz.family treasury model]
 - [x] Set up Hardhat in contracts/ directory (Hardhat 2.29, toolbox 5, TS pinned to 5.4.5 — newer TS breaks ts-node)
 - [x] Install OpenZeppelin contracts (v5.6)
-- [x] Write StackToken.sol (100M cap, 5M premint, burn counts against cap, refinery-only mint)
+- [x] ~~StackToken.sol~~ removed — STACK is external (ponz.family, 1B fixed supply); MockStack.sol stands in for tests/testnet
 - [x] Write MinerNFT.sol (ERC-721 Enumerable, tier + hashrate per token, refinery-only mint)
-- [x] Write StackRefinery.sol (entry, emission + halving, buy/place/remove miners, upgrades, referrals, pause, fee withdrawal)
-- [x] Write deployment script (scripts/deploy.ts — deploys all 3, wires refinery, prints frontend config)
-- [x] Write tests (test/StackRefinery.test.ts — 19 passing: cap, emission, halving boundary, referral routing/loops, grid/power limits, cooldowns, admin)
+- [x] Write StackRefinery.sol (entry, emission + halving, treasury-paid rewards with pool clipping, fundRewards, buy/place/remove miners with 0xdEaD burns, upgrades, referrals, pause, fee withdrawal)
+- [x] Write deployment script (scripts/deploy.ts — takes STACK_TOKEN_ADDRESS, deploys NFT+refinery, wires, prints frontend config; auto-deploys MockStack on non-mainnet)
+- [x] Write tests (test/StackRefinery.test.ts — 20 passing: treasury funding, pool clipping + refund recovery, emission, halving boundary, referral routing/loops, dead-address burns, grid/power limits, cooldowns, admin)
 - [x] Compile green (`npm run compile` / `npm test` in contracts/)
 
 ### Phase 4: Wire Frontend to Contracts [IN PROGRESS]
@@ -284,9 +306,10 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [ ] Add error handling and tx notifications
 
 ### Phase 5: Deploy [NOT STARTED]
-- [ ] Deploy contracts to Robinhood Chain
-- [ ] Verify contracts on explorer
-- [ ] Add liquidity (5M STACK premint)
+- [ ] Launch STACK on ponz.family (1B fixed supply) + dev-buy the game treasury allocation on the curve
+- [ ] Deploy MinerNFT + StackRefinery to Robinhood Chain with STACK_TOKEN_ADDRESS set (choose EMISSION_PER_DAY to match treasury size)
+- [ ] Fund the reward pool (transfer STACK to the refinery / fundRewards)
+- [ ] Verify contracts on Blockscout
 - [ ] Deploy frontend to Vercel
 - [ ] Test end-to-end on mainnet
 
@@ -298,11 +321,12 @@ cd contracts
 npm install
 npm run compile
 npm test
-npm run deploy:testnet     # dry-run on testnet (chainId 46630) first
-npm run deploy:robinhood   # mainnet; needs DEPLOYER_PRIVATE_KEY (+ optional ROBINHOOD_RPC_URL, DEV_WALLET) in ../.env.local
+npm run deploy:testnet     # dry-run on testnet (chainId 46630); deploys MockStack if STACK_TOKEN_ADDRESS unset
+npm run deploy:robinhood   # mainnet; needs DEPLOYER_PRIVATE_KEY + STACK_TOKEN_ADDRESS (+ optional DEV_WALLET, EMISSION_PER_DAY) in ../.env.local
 ```
-The deploy script wires token/NFT to the refinery and prints the three
-addresses to paste into `frontend/src/config.ts` ADDRESSES.
+The deploy script wires the NFT to the refinery and prints the three
+addresses to paste into `frontend/src/config.ts` ADDRESSES. After deploy,
+fund the reward pool by transferring STACK to the refinery address.
 
 ### Frontend
 ```bash

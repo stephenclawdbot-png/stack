@@ -13,8 +13,9 @@ export interface GameState {
   playerHashrate: number;
   totalNetworkHashrate: number;
   pendingRewards: number;
-  totalMinted: number;
+  totalRewardsPaid: number;
   totalBurned: number;
+  rewardPool: number;
   stackBalance: number;
   minerCount: number;
   referralCode: string;
@@ -49,7 +50,7 @@ export function useGame() {
 
       const [
         hasFacility, facTier, gridSize, power, powerUsed,
-        playerHash, networkHash, pending, minted, burned,
+        playerHash, networkHash, pending, rewardsPaid, burned, pool,
         stackBal, minerCount, refCode, refAddr, refVol, refTier,
         emissionRate, halving, lastUpg, cooldown,
       ] = await Promise.all([
@@ -61,8 +62,9 @@ export function useGame() {
         refinery.playerHashrate(wallet.address),
         refinery.totalNetworkHashrate(),
         refinery.pendingRewards(wallet.address),
-        refinery.totalMinted(),
+        refinery.totalRewardsPaid(),
         refinery.totalBurned(),
+        refinery.rewardPool(),
         token.balanceOf(wallet.address),
         minerNFT.balanceOf(wallet.address),
         refinery.referralCode(wallet.address),
@@ -84,8 +86,9 @@ export function useGame() {
         playerHashrate: Number(playerHash),
         totalNetworkHashrate: Number(networkHash),
         pendingRewards: parseFloat(ethers.formatUnits(pending, 18)),
-        totalMinted: parseFloat(ethers.formatUnits(minted, 18)),
+        totalRewardsPaid: parseFloat(ethers.formatUnits(rewardsPaid, 18)),
         totalBurned: parseFloat(ethers.formatUnits(burned, 18)),
+        rewardPool: parseFloat(ethers.formatUnits(pool, 18)),
         stackBalance: parseFloat(ethers.formatUnits(stackBal, 18)),
         minerCount: Number(minerCount),
         referralCode: refCode,

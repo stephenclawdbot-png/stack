@@ -57,11 +57,12 @@ export function AboutPage() {
       </div>
 
       <div className="panel-elevated">
-        <h2 className="font-heading text-text-strong mb-2">Fixed 100M Cap</h2>
+        <h2 className="font-heading text-text-strong mb-2">Fixed 1B Supply</h2>
         <p className="text-sm text-muted">
-          The total STACK supply is capped at 100 million. Emission halves approximately every
-          158 days. Burned tokens remain counted against the cap, meaning burning does not
-          reopen mint room. This creates a deflationary pressure over time.
+          STACK is a fixed-supply token launched on ponz.family — 1 billion tokens, no minting,
+          ever. The game pays rewards from an on-chain pool, emission halves approximately every
+          158 days, and 75% of every purchase is burned to the dead address forever. This creates
+          deflationary pressure over time.
         </p>
       </div>
 

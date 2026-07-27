@@ -33,11 +33,11 @@ export function DocsPage() {
           <div className="flex justify-between"><span className="text-muted">Emission rate at launch</span><span className="font-mono text-text">{formatStack(EMISSION_PER_DAY.toString())} STACK/day</span></div>
           <div className="flex justify-between"><span className="text-muted">Halving interval</span><span className="font-mono text-text">~158.3 days</span></div>
           <div className="flex justify-between"><span className="text-muted">Max supply</span><span className="font-mono text-text">{formatStack(MAX_SUPPLY.toString())} STACK</span></div>
-          <div className="flex justify-between"><span className="text-muted">Preminted (liquidity)</span><span className="font-mono text-text">5,000,000 STACK</span></div>
+          <div className="flex justify-between"><span className="text-muted">Token</span><span className="font-mono text-text">Fixed supply, launched on ponz.family</span></div>
           <div className="flex justify-between"><span className="text-muted">Purchase burned</span><span className="font-mono text-accent">75%</span></div>
-          <div className="flex justify-between"><span className="text-muted">Purchase to game balance</span><span className="font-mono text-secondary">25%</span></div>
+          <div className="flex justify-between"><span className="text-muted">Purchase to reward pool</span><span className="font-mono text-secondary">25%</span></div>
         </div>
-        <p className="text-xs text-muted mt-2">Emission halves every {HALVING_INTERVAL.toLocaleString()} seconds. Burned STACK remains counted against the cap, so burning does not reopen mint room.</p>
+        <p className="text-xs text-muted mt-2">Emission halves every {HALVING_INTERVAL.toLocaleString()} seconds. Rewards are paid from an on-chain pool held by the game contract; burns go to the dead address permanently. The supply is fixed — nothing can ever be minted.</p>
       </section>
 
       <section>

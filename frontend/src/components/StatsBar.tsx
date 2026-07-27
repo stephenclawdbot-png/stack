@@ -44,7 +44,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
           <span className="stat-label">Network Hash</span>
         </div>
         <div className="stat-value">{formatHashrate(state.totalNetworkHashrate)}</div>
-        <div className="text-xs text-muted">{formatStack(state.totalMinted.toString())} minted</div>
+        <div className="text-xs text-muted">{formatStack(state.rewardPool.toString())} in pool</div>
       </div>
 
       <div className="panel-elevated">

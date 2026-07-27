@@ -26,10 +26,10 @@ npm test
 
 ## Tokenomics
 
-- **STACK**: 100M max supply, 18 decimals
-- **Emission**: 300K/day at launch, halves every ~158 days
-- **Burn**: 75% of purchases burned forever, 25% to game balance
-- **Premint**: 5M STACK for launch liquidity
+- **STACK**: fixed 1B supply, launched on [ponz.family](https://pons.money) — the game cannot mint
+- **Treasury**: rewards are paid from an on-chain pool held by the game contract
+- **Emission**: 3M/day at launch (configurable at deploy), halves every ~158 days
+- **Burn**: 75% of purchases sent to 0xdEaD forever, 25% recycles into the reward pool
 
 ## Tech
 
