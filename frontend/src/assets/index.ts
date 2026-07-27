@@ -29,6 +29,11 @@ import refineryWorker from "../assets/characters/refinery-worker-south.png";
 import miningForeman from "../assets/characters/mining-foreman-south.png";
 import drillBot from "../assets/characters/drill-bot-south.png";
 
+import mascot from "../assets/brand/mascot.png";
+import mascotJump from "../assets/brand/mascot-jump.png";
+import bottlecap from "../assets/brand/bottlecap.png";
+import wastelandBanner from "../assets/brand/wasteland-banner.png";
+
 export const minerSprites = [t0, t1, t2, t3, t4];
 
 export const sprites = {
@@ -66,4 +71,12 @@ export const characters = {
   refineryWorker,
   miningForeman,
   drillBot,
+};
+
+// Stack-Tec brand assets (atompunk rebrand)
+export const brand = {
+  mascot,
+  mascotJump,
+  bottlecap,
+  wastelandBanner,
 };

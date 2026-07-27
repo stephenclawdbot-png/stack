@@ -12,8 +12,8 @@
     font-size: 20px;
     line-height: 1.35;
     background-image:
-      radial-gradient(ellipse at 50% -20%, rgba(245, 158, 11, 0.07), transparent 60%),
-      linear-gradient(180deg, #06141f 0%, #071b27 40%, #051019 100%);
+      radial-gradient(ellipse at 50% -20%, rgba(253, 180, 42, 0.08), transparent 60%),
+      linear-gradient(180deg, #0c0e07 0%, #10120a 40%, #0a0c05 100%);
     background-attachment: fixed;
     image-rendering: pixelated;
   }
@@ -50,13 +50,13 @@
   .panel,
   .panel-elevated {
     position: relative;
-    background: linear-gradient(180deg, #16303f 0%, #102636 100%);
+    background: linear-gradient(180deg, #232816 0%, #1a1d10 100%);
     padding: 1rem;
-    border: 2px solid #223d52;
+    border: 2px solid #3c4224;
     box-shadow:
       inset 0 2px 0 rgba(255, 255, 255, 0.06),
       inset 0 -2px 0 rgba(0, 0, 0, 0.45),
-      0 3px 0 #04101a;
+      0 3px 0 #070803;
     clip-path: polygon(
       0 6px, 6px 6px, 6px 0,
       calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px,
@@ -66,7 +66,7 @@
   }
 
   .panel-elevated {
-    background: linear-gradient(180deg, #1a3546 0%, #132c3c 100%);
+    background: linear-gradient(180deg, #2a2f1a 0%, #1e2212 100%);
   }
 
   /* --- Big riveted metal frame (uses refinery-panel art) ---------------- */
@@ -76,7 +76,7 @@
     border-width: 26px 30px;
     border-image: url("./assets/ui/refinery-panel.png") 76 90 76 90 / 26px 30px stretch;
     image-rendering: pixelated;
-    background-color: rgba(9, 22, 33, 0.9);
+    background-color: rgba(13, 15, 8, 0.9);
     background-clip: padding-box;
     padding: 0.75rem;
   }
@@ -88,7 +88,7 @@
     border-width: 28px;
     border-image: url("./assets/ui/shop-panel.png") 74 / 28px stretch;
     image-rendering: pixelated;
-    background-color: rgba(7, 14, 24, 0.92);
+    background-color: rgba(10, 12, 6, 0.92);
     background-clip: padding-box;
     padding: 0.75rem;
   }
@@ -100,7 +100,7 @@
     border-width: 26px;
     border-image: url("./assets/ui/referral-panel.png") 64 / 26px stretch;
     image-rendering: pixelated;
-    background-color: rgba(12, 24, 35, 0.92);
+    background-color: rgba(15, 17, 9, 0.92);
     background-clip: padding-box;
     padding: 0.75rem;
   }
@@ -117,12 +117,12 @@
   }
 
   .btn-primary {
-    @apply btn text-[#3b2503];
-    background: linear-gradient(180deg, #ffd23e 0%, #f59e0b 55%, #d97706 100%);
+    @apply btn text-[#2e2003];
+    background: linear-gradient(180deg, #ffd23e 0%, #fdb42a 55%, #c77f10 100%);
     box-shadow:
-      inset 0 2px 0 #ffe9a8,
-      inset 0 -3px 0 #a15b05,
-      0 3px 0 #52300a,
+      inset 0 2px 0 #ffedb0,
+      inset 0 -3px 0 #8a5a08,
+      0 3px 0 #3d2a06,
       0 5px 0 rgba(0, 0, 0, 0.55);
     clip-path: polygon(
       0 4px, 4px 4px, 4px 0,
@@ -139,9 +139,9 @@
   .btn-primary:active:not(:disabled) {
     transform: translateY(2px);
     box-shadow:
-      inset 0 2px 0 #ffe9a8,
-      inset 0 -2px 0 #a15b05,
-      0 1px 0 #52300a,
+      inset 0 2px 0 #ffedb0,
+      inset 0 -2px 0 #8a5a08,
+      0 1px 0 #3d2a06,
       0 2px 0 rgba(0, 0, 0, 0.55);
   }
 
@@ -152,11 +152,11 @@
 
   .btn-secondary {
     @apply btn text-text;
-    background: linear-gradient(180deg, #24455c 0%, #16303f 100%);
+    background: linear-gradient(180deg, #39412a 0%, #232816 100%);
     box-shadow:
       inset 0 2px 0 rgba(255, 255, 255, 0.1),
       inset 0 -3px 0 rgba(0, 0, 0, 0.5),
-      0 3px 0 #04101a;
+      0 3px 0 #070803;
     clip-path: polygon(
       0 4px, 4px 4px, 4px 0,
       calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
@@ -195,12 +195,12 @@
     @apply font-mono text-text-strong;
     font-size: 28px;
     line-height: 1;
-    text-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+    text-shadow: 0 0 8px rgba(253, 180, 42, 0.35);
   }
 
   .led-text {
     @apply font-mono text-accent;
-    text-shadow: 0 0 6px rgba(245, 158, 11, 0.8), 0 0 18px rgba(245, 158, 11, 0.4);
+    text-shadow: 0 0 6px rgba(253, 180, 42, 0.8), 0 0 18px rgba(253, 180, 42, 0.4);
   }
 
   .pixel-corners {
@@ -223,15 +223,15 @@
     @apply font-mono text-accent bg-black/60 w-full;
     font-size: 22px;
     padding: 0.5rem 0.75rem;
-    border: 2px solid #223d52;
+    border: 2px solid #3c4224;
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
     outline: none;
-    caret-color: #f59e0b;
+    caret-color: #fdb42a;
   }
 
   .input-terminal:focus {
-    border-color: #f59e0b;
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 10px rgba(245, 158, 11, 0.25);
+    border-color: #fdb42a;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 10px rgba(253, 180, 42, 0.25);
   }
 }
 
@@ -241,12 +241,12 @@
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #071520;
+  background: #0c0e07;
 }
 ::-webkit-scrollbar-thumb {
-  background: #223d52;
-  border: 2px solid #071520;
+  background: #3c4224;
+  border: 2px solid #0c0e07;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a4a63;
+  background: #4a5230;
 }

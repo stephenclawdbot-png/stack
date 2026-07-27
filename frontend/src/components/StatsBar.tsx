@@ -1,7 +1,7 @@
 import { PickaxeIcon, FactoryIcon } from "./Icons";
 import type { GameState } from "../lib/useGame";
 import { formatHashrate, formatStack } from "../lib/format";
-import { sprites } from "../assets";
+import { brand } from "../assets";
 
 export function StatsBar({ state }: { state: GameState | null }) {
   if (!state) {
@@ -31,7 +31,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
 
       <div className="panel-elevated">
         <div className="flex items-center gap-2 mb-1">
-          <img src={sprites.tokenIcon} alt="STACK" className="w-5 h-5 pixelated" />
+          <img src={brand.bottlecap} alt="STACK" className="w-6 h-6 pixelated" />
           <span className="stat-label">Pending STACK</span>
         </div>
         <div className="stat-value text-accent">{formatStack(state.pendingRewards.toString())}</div>
@@ -49,7 +49,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
 
       <div className="panel-elevated">
         <div className="flex items-center gap-2 mb-1">
-          <img src={sprites.tokenIcon} alt="STACK" className="w-5 h-5 pixelated" />
+          <img src={brand.bottlecap} alt="STACK" className="w-6 h-6 pixelated" />
           <span className="stat-label">STACK Balance</span>
         </div>
         <div className="stat-value">{formatStack(state.stackBalance.toString())}</div>

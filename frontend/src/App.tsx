@@ -5,7 +5,7 @@ import { DocsPage } from "./pages/DocsPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ReferralPage } from "./pages/ReferralPage";
 import { PickaxeIcon, BookIcon, InfoIcon, ShareIcon, LinkButton } from "./components/Icons";
-import { sprites, uiPanels } from "./assets";
+import { sprites, uiPanels, brand } from "./assets";
 
 type Page = "game" | "docs" | "about" | "referral";
 
@@ -29,7 +29,7 @@ export default function App() {
       <header className="border-b border-border bg-surface/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <button onClick={() => goTo("game")} className="flex items-center gap-3">
-            <img src={sprites.tokenIcon} alt="STACK" className="w-8 h-8 pixelated animate-pulse-glow" />
+            <img src={brand.bottlecap} alt="STACK" className="w-8 h-8 pixelated animate-pulse-glow" />
             <span className="font-heading text-xs md:text-sm text-accent [text-shadow:2px_2px_0_#000]">
               STACK REFINERY
             </span>
@@ -53,18 +53,23 @@ export default function App() {
         </div>
       </header>
 
-      {/* Title banner — gears & pipes frame from PixelLab */}
+      {/* Title banner — atompunk wasteland panorama */}
       <div className="max-w-6xl mx-auto w-full px-4 mt-4">
         <div
-          className="relative h-20 md:h-24 pixelated flex items-center justify-center"
-          style={{ backgroundImage: `url(${uiPanels.headerBanner})`, backgroundSize: "100% 100%" }}
+          className="relative h-32 md:h-44 pixelated flex items-end justify-center overflow-hidden border-2 border-border"
+          style={{ backgroundImage: `url(${brand.wastelandBanner})`, backgroundSize: "100% 100%" }}
         >
-          <div className="text-center">
-            <div className="font-heading text-sm md:text-lg text-accent [text-shadow:3px_3px_0_#000]">
+          <img
+            src={brand.mascot}
+            alt="Stack Boy"
+            className="absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)]"
+          />
+          <div className="text-center pb-3 md:pb-4 [text-shadow:3px_3px_0_#000]">
+            <div className="font-heading text-sm md:text-xl text-accent">
               STACK REFINERY
             </div>
-            <div className="text-lg md:text-xl text-muted font-mono -mt-0.5">
-              dig. claim. compound. repeat.
+            <div className="text-lg md:text-2xl text-text font-mono -mt-0.5">
+              A STACK-TEC™ FACILITY — building a brighter yield
             </div>
           </div>
         </div>
@@ -96,7 +101,7 @@ export default function App() {
       >
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between text-lg">
           <span className="font-mono text-text [text-shadow:2px_2px_0_#000]">
-            STACK REFINERY // ROBINHOOD CHAIN
+            STACK-TEC™ INDUSTRIES // ROBINHOOD CHAIN
           </span>
           <a
             href="https://robinhoodchain.blockscout.com"

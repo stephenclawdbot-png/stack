@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ENTRY_FEE } from "../config";
-import { sprites, characters, uiPanels } from "../assets";
+import { sprites, characters, uiPanels, brand } from "../assets";
 
 interface EnterFacilityProps {
   onEnter: (referralCode: string) => void;
@@ -32,7 +32,7 @@ export function EnterFacility({ onEnter, loading, presetRef }: EnterFacilityProp
         <div className="frame-metal">
           <div className="p-2">
             <div className="flex items-end gap-3 mb-3">
-              <img src={sprites.refineryBuilding} alt="" className="w-16 h-16 pixelated" />
+              <img src={brand.mascot} alt="Stack Boy" className="w-20 h-20 pixelated" />
               <h2 className="text-sm leading-6">OPEN YOUR<br />REFINERY</h2>
             </div>
             <p className="text-muted mb-4">
