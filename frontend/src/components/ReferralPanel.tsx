@@ -28,7 +28,7 @@ export function ReferralPanel({ state, onCreateCode, loading }: ReferralPanelPro
   };
 
   return (
-    <div className="panel-elevated">
+    <div className="frame-clip">
       <h3 className="font-heading text-text-strong mb-3 flex items-center gap-2">
         <ShareIcon className="w-5 h-5 text-accent" />
         Referral Program

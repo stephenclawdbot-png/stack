@@ -1,4 +1,4 @@
-import { useGame } from "../lib/useGame";
+import { useGame, type GameState } from "../lib/useGame";
 import { ConnectButton } from "../components/ConnectButton";
 import { EnterFacility } from "../components/EnterFacility";
 import { StatsBar } from "../components/StatsBar";
@@ -7,8 +7,56 @@ import { MinerShop } from "../components/MinerShop";
 import { ClaimPanel } from "../components/ClaimPanel";
 import { ReferralPanel } from "../components/ReferralPanel";
 
+// ?demo=1 renders the game board with mock state (design review / promo shots)
+const DEMO_STATE: GameState = {
+  hasFacility: true,
+  facilityTier: 2,
+  facilityGridSize: 3,
+  facilityPower: 25,
+  facilityPowerUsed: 15,
+  playerHashrate: 36,
+  totalNetworkHashrate: 1284,
+  pendingRewards: 12845.7,
+  totalRewardsPaid: 8_412_390,
+  totalBurned: 1_968_204,
+  rewardPool: 412_500_000,
+  stackBalance: 6420.5,
+  minerCount: 3,
+  referralCode: "stackers",
+  referrer: "0x0000000000000000000000000000000000000000",
+  referredVolume: 84_120,
+  referralTier: 1,
+  emissionRatePerSec: 34.72,
+  nextHalving: Math.floor(Date.now() / 1000) + 9_000_000,
+  lastUpgrade: Math.floor(Date.now() / 1000) - 90_000,
+  upgradeCooldown: 86_400,
+  lastClaim: Math.floor(Date.now() / 1000) - 7_200,
+};
+
 export function GamePage() {
   const game = useGame();
+  const isDemo = new URLSearchParams(window.location.search).has("demo");
+
+  if (isDemo) {
+    const noop = () => {};
+    return (
+      <div className="space-y-4">
+        <StatsBar state={DEMO_STATE} />
+        <ClaimPanel state={DEMO_STATE} onClaim={noop} loading={false} />
+        <div className="grid md:grid-cols-2 gap-4">
+          <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} />
+          <MinerShop
+            stackBalance={DEMO_STATE.stackBalance}
+            pendingRewards={DEMO_STATE.pendingRewards}
+            onBuy={noop}
+            onCompound={noop}
+            loading={false}
+          />
+        </div>
+        <ReferralPanel state={DEMO_STATE} onCreateCode={noop} loading={false} />
+      </div>
+    );
+  }
 
   // Not connected
   if (!game.wallet.address) {

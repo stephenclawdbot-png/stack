@@ -5,7 +5,7 @@ import { DocsPage } from "./pages/DocsPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ReferralPage } from "./pages/ReferralPage";
 import { PickaxeIcon, BookIcon, InfoIcon, ShareIcon, LinkButton } from "./components/Icons";
-import { sprites } from "./assets";
+import { sprites, uiPanels } from "./assets";
 
 type Page = "game" | "docs" | "about" | "referral";
 
@@ -28,12 +28,10 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border bg-surface/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => goTo("game")} className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-accent-soft border border-accent/30 flex items-center justify-center overflow-hidden">
-              <img src={sprites.tokenIcon} alt="STACK" className="w-6 h-6 pixelated" />
-            </div>
-            <span className="font-heading text-lg font-semibold text-text-strong tracking-tight">
-              Stack Refinery
+          <button onClick={() => goTo("game")} className="flex items-center gap-3">
+            <img src={sprites.tokenIcon} alt="STACK" className="w-8 h-8 pixelated animate-pulse-glow" />
+            <span className="font-heading text-xs md:text-sm text-accent [text-shadow:2px_2px_0_#000]">
+              STACK REFINERY
             </span>
           </button>
 
@@ -55,6 +53,23 @@ export default function App() {
         </div>
       </header>
 
+      {/* Title banner — gears & pipes frame from PixelLab */}
+      <div className="max-w-6xl mx-auto w-full px-4 mt-4">
+        <div
+          className="relative h-20 md:h-24 pixelated flex items-center justify-center"
+          style={{ backgroundImage: `url(${uiPanels.headerBanner})`, backgroundSize: "100% 100%" }}
+        >
+          <div className="text-center">
+            <div className="font-heading text-sm md:text-lg text-accent [text-shadow:3px_3px_0_#000]">
+              STACK REFINERY
+            </div>
+            <div className="text-lg md:text-xl text-muted font-mono -mt-0.5">
+              dig. claim. compound. repeat.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
         {page === "game" && <GamePage />}
         {page === "docs" && <DocsPage />}
@@ -62,10 +77,33 @@ export default function App() {
         {page === "about" && <AboutPage />}
       </main>
 
-      <footer className="border-t border-border bg-surface/50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between text-xs text-muted">
-          <span>Stack Refinery | Robinhood Chain</span>
-          <a href="https://explorer.robinhood.com" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+      {/* Factory skyline sitting on the footer */}
+      <div className="max-w-6xl mx-auto w-full px-4 overflow-hidden">
+        <div className="flex items-end justify-center gap-3 md:gap-6 translate-y-[3px] opacity-95">
+          <img src={sprites.crane} alt="" className="h-20 md:h-28 pixelated" />
+          <img src={sprites.storageTank} alt="" className="h-14 md:h-20 pixelated" />
+          <img src={sprites.refineryBuilding} alt="" className="h-16 md:h-24 pixelated" />
+          <img src={sprites.smelterFurnace} alt="" className="h-14 md:h-20 pixelated hidden sm:block" />
+          <img src={sprites.conveyorBelt} alt="" className="h-12 md:h-16 pixelated hidden md:block" />
+          <img src={sprites.orePile} alt="" className="h-8 md:h-10 pixelated" />
+          <img src={sprites.controlTerminal} alt="" className="h-10 md:h-14 pixelated hidden sm:block" />
+          <img src={sprites.hazardSign} alt="" className="h-8 md:h-10 pixelated" />
+        </div>
+      </div>
+      <footer
+        className="pixelated"
+        style={{ backgroundImage: `url(${uiPanels.footerBar})`, backgroundSize: "100% 100%" }}
+      >
+        <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between text-lg">
+          <span className="font-mono text-text [text-shadow:2px_2px_0_#000]">
+            STACK REFINERY // ROBINHOOD CHAIN
+          </span>
+          <a
+            href="https://robinhoodchain.blockscout.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-text hover:text-accent [text-shadow:2px_2px_0_#000]"
+          >
             View on Explorer
           </a>
         </div>

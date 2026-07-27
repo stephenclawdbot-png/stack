@@ -1,11 +1,15 @@
 import { MINER_TIERS, FACILITY_TIERS, REFERRAL_TIERS, EMISSION_PER_DAY, HALVING_INTERVAL, MAX_SUPPLY } from "../config";
 import { formatStack } from "../lib/format";
+import { characters } from "../assets";
 
 export function DocsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <section>
-        <h1 className="text-2xl font-heading mb-4">How the Refinery Works</h1>
+        <div className="flex items-end gap-3 mb-4">
+          <img src={characters.miningForeman} alt="Mining foreman" className="h-14 pixelated" />
+          <h1 className="text-base md:text-xl font-heading">How the Refinery Works</h1>
+        </div>
         <p className="text-muted mb-4">
           Four actions form the whole loop. Each step makes the next one faster.
         </p>

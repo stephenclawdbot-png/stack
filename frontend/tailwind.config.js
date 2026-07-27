@@ -20,9 +20,9 @@ export default {
         danger: "#ef4444",
       },
       fontFamily: {
-        heading: ["Prompt", "system-ui", "sans-serif"],
-        body: ["Fira Sans", "system-ui", "sans-serif"],
-        mono: ["Fira Code", "monospace", "ui-monospace"],
+        heading: ['"Press Start 2P"', "monospace"],
+        body: ["VT323", "monospace"],
+        mono: ["VT323", "monospace"],
       },
       animation: {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",

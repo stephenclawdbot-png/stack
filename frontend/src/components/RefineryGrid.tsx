@@ -3,7 +3,7 @@ import type { GameState } from "../lib/useGame";
 import { FACILITY_TIERS } from "../config";
 import { FactoryIcon } from "./Icons";
 import { formatStack, timeUntil } from "../lib/format";
-import { minerSprites } from "../assets";
+import { minerSprites, uiPanels, sprites } from "../assets";
 
 interface RefineryGridProps {
   state: GameState;
@@ -30,13 +30,13 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
   };
 
   return (
-    <div className="panel-elevated">
+    <div className="frame-metal">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-heading text-text-strong flex items-center gap-2">
+        <h3 className="text-[11px] flex items-center gap-2">
           <FactoryIcon className="w-5 h-5 text-accent" />
           {tier.name}
         </h3>
-        <span className="text-xs text-muted">
+        <span className="text-lg text-muted font-mono">
           T{state.facilityTier} | {tier.gridSize}x{tier.gridSize} grid
         </span>
       </div>
@@ -59,53 +59,62 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Grid — drawn on the workshop floor art */}
       <div
-        className="grid gap-1 p-2 bg-bg/50 rounded-lg border border-border"
-        style={{ gridTemplateColumns: `repeat(${tier.gridSize}, 1fr)` }}
+        className="relative p-[9%] pixelated aspect-square max-w-sm mx-auto"
+        style={{
+          backgroundImage: `url(${uiPanels.gridPanel})`,
+          backgroundSize: "100% 100%",
+        }}
       >
-        {grid.map((_, idx) => {
-          const occupied = idx < state.minerCount;
-          const selected = selectedCells.has(idx);
-          return (
-            <button
-              key={idx}
-              onClick={() => !occupied && toggleCell(idx)}
-              className={`aspect-square rounded border-2 flex items-center justify-center transition-all ${
-                occupied
-                  ? "border-accent bg-accent-soft"
-                  : selected
-                    ? "border-secondary bg-secondary-soft"
-                    : "border-border bg-surface hover:border-accent/50"
-              }`}
-            >
-              {occupied ? (
-                <img src={minerSprites[0]} alt="miner" className="w-full h-full pixelated object-contain animate-pulse-glow" />
-              ) : selected ? (
-                <div className="w-2 h-2 rounded-full bg-secondary" />
-              ) : (
-                <span className="text-xs text-muted/30">+</span>
-              )}
-            </button>
-          );
-        })}
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: `repeat(${tier.gridSize}, 1fr)` }}
+        >
+          {grid.map((_, idx) => {
+            const occupied = idx < state.minerCount;
+            const selected = selectedCells.has(idx);
+            return (
+              <button
+                key={idx}
+                onClick={() => !occupied && toggleCell(idx)}
+                className={`aspect-square border-2 flex items-center justify-center ${
+                  occupied
+                    ? "border-accent bg-black/40"
+                    : selected
+                      ? "border-secondary bg-secondary-soft"
+                      : "border-white/10 bg-black/30 hover:border-accent/60"
+                }`}
+              >
+                {occupied ? (
+                  <img src={minerSprites[0]} alt="miner" className="w-[85%] h-[85%] pixelated object-contain animate-pulse-glow" />
+                ) : selected ? (
+                  <div className="w-2 h-2 bg-secondary" />
+                ) : (
+                  <span className="text-lg text-white/20 font-mono">+</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <img src={sprites.pipeValve} alt="" className="absolute -bottom-1 -left-1 w-7 pixelated" />
       </div>
 
       {/* Upgrade button */}
       {nextTier && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted">
+        <div className="mt-3 pt-3 border-t-2 border-white/10">
+          <div className="flex items-center justify-between mb-2 text-lg">
+            <span className="text-muted">
               Upgrade to {nextTier.name} ({nextTier.gridSize}x{nextTier.gridSize})
             </span>
-            <span className="font-mono text-sm text-accent">
+            <span className="led-text">
               {formatStack(nextTier.upgradeCost.toString())} STACK
             </span>
           </div>
           <button
             onClick={onUpgrade}
             disabled={loading || !upgradeAvailable}
-            className="btn-secondary w-full text-sm"
+            className="btn-secondary w-full"
           >
             {loading
               ? "Processing..."
