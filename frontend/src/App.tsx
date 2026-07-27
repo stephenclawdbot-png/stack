@@ -56,15 +56,16 @@ export default function App() {
       {/* Title banner — atompunk wasteland panorama */}
       <div className="max-w-6xl mx-auto w-full px-4 mt-4">
         <div
-          className="relative h-32 md:h-44 pixelated flex items-end justify-center overflow-hidden border-2 border-border"
+          className="relative h-32 md:h-44 pixelated overflow-hidden border-2 border-border"
           style={{ backgroundImage: `url(${brand.wastelandBanner})`, backgroundSize: "100% 100%" }}
         >
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
           <img
             src={brand.mascot}
             alt="Stack Boy"
             className="absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)]"
           />
-          <div className="text-center pb-3 md:pb-4 [text-shadow:3px_3px_0_#000]">
+          <div className="absolute left-28 md:left-44 right-3 bottom-2 md:bottom-3 [text-shadow:2px_2px_0_#000]">
             <div className="font-heading text-sm md:text-xl text-accent">
               STACK REFINERY
             </div>

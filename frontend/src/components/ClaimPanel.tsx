@@ -42,7 +42,7 @@ export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
         </div>
       </button>
 
-      <div className="flex justify-between mt-2 px-1 text-lg text-muted">
+      <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 mt-2 text-lg text-muted text-center">
         <span>
           Rig output:{" "}
           <span className="text-accent font-mono">
@@ -54,7 +54,7 @@ export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
             STACK/day
           </span>
         </span>
-        <span>Compounding is 10% cheaper - no cooldown</span>
+        <span>Compounding is 10% cheaper — no cooldown</span>
       </div>
     </div>
   );

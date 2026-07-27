@@ -78,20 +78,24 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
               <button
                 key={idx}
                 onClick={() => !occupied && toggleCell(idx)}
-                className={`aspect-square border-2 flex items-center justify-center ${
+                className={`aspect-square flex items-center justify-center transition-colors duration-100 ${
                   occupied
-                    ? "border-accent bg-black/40"
+                    ? "bg-black/30"
                     : selected
-                      ? "border-secondary bg-secondary-soft"
-                      : "border-white/10 bg-black/30 hover:border-accent/60"
+                      ? "border-2 border-secondary bg-secondary-soft"
+                      : "border border-white/5 bg-black/25 hover:border-accent/50 hover:bg-black/40"
                 }`}
               >
                 {occupied ? (
-                  <img src={minerSprites[0]} alt="miner" className="w-[85%] h-[85%] pixelated object-contain animate-pulse-glow" />
+                  <img
+                    src={minerSprites[0]}
+                    alt="miner"
+                    className="w-[88%] h-[88%] pixelated object-contain animate-pulse-glow drop-shadow-[0_0_6px_rgba(253,180,42,0.45)]"
+                  />
                 ) : selected ? (
                   <div className="w-2 h-2 bg-secondary" />
                 ) : (
-                  <span className="text-lg text-white/20 font-mono">+</span>
+                  <span className="text-lg text-white/15 font-mono">+</span>
                 )}
               </button>
             );

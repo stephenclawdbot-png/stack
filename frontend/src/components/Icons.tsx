@@ -82,10 +82,10 @@ export function LinkButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2 px-3 py-2 font-heading text-[10px] uppercase pixel-corners transition-colors duration-100 ${
         active
-          ? "bg-accent text-bg"
-          : "text-muted hover:text-text hover:bg-surface-2"
+          ? "bg-accent text-bg [box-shadow:inset_0_-3px_0_rgba(0,0,0,0.35)]"
+          : "text-muted hover:text-accent hover:bg-surface-2"
       }`}
     >
       {icon}

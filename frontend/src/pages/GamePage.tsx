@@ -40,10 +40,10 @@ export function GamePage() {
   if (isDemo) {
     const noop = () => {};
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <StatsBar state={DEMO_STATE} />
         <ClaimPanel state={DEMO_STATE} onClaim={noop} loading={false} />
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-4 items-start">
           <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} />
           <MinerShop
             stackBalance={DEMO_STATE.stackBalance}
@@ -110,7 +110,7 @@ export function GamePage() {
   // Main game UI
   if (game.state && game.state.hasFacility) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {game.error && (
           <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-2 text-sm text-danger">
             {game.error}
@@ -121,7 +121,7 @@ export function GamePage() {
 
         <ClaimPanel state={game.state} onClaim={game.claimRewards} loading={game.loading} />
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-4 items-start">
           <RefineryGrid state={game.state} onUpgrade={game.upgradeFacility} loading={game.loading} />
           <MinerShop
             stackBalance={game.state.stackBalance}

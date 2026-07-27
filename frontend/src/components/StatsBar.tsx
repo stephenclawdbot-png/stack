@@ -26,7 +26,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
           <span className="stat-label">Your Hashrate</span>
         </div>
         <div className="stat-value">{formatHashrate(state.playerHashrate)}</div>
-        <div className="text-xs text-muted">{networkShare.toFixed(3)}% of network</div>
+        <div className="text-base text-muted">{networkShare.toFixed(3)}% of network</div>
       </div>
 
       <div className="panel-elevated">
@@ -35,7 +35,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
           <span className="stat-label">Pending STACK</span>
         </div>
         <div className="stat-value text-accent">{formatStack(state.pendingRewards.toString())}</div>
-        <div className="text-xs text-muted">{state.emissionRatePerSec > 0 ? `${formatStack(state.emissionRatePerSec.toString())}/sec total` : ""}</div>
+        <div className="text-base text-muted">{state.emissionRatePerSec > 0 ? `${formatStack(state.emissionRatePerSec.toString())}/sec total` : ""}</div>
       </div>
 
       <div className="panel-elevated">
@@ -44,7 +44,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
           <span className="stat-label">Network Hash</span>
         </div>
         <div className="stat-value">{formatHashrate(state.totalNetworkHashrate)}</div>
-        <div className="text-xs text-muted">{formatStack(state.rewardPool.toString())} in pool</div>
+        <div className="text-base text-muted">{formatStack(state.rewardPool.toString())} in pool</div>
       </div>
 
       <div className="panel-elevated">
@@ -53,7 +53,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
           <span className="stat-label">STACK Balance</span>
         </div>
         <div className="stat-value">{formatStack(state.stackBalance.toString())}</div>
-        <div className="text-xs text-muted">{state.minerCount} miners</div>
+        <div className="text-base text-muted">{state.minerCount} miners</div>
       </div>
     </div>
   );
