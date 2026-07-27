@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { FactoryIcon } from "./Icons";
 import { ENTRY_FEE } from "../config";
-import { sprites, characters } from "../assets";
+import { sprites } from "../assets";
 
 interface EnterFacilityProps {
   onEnter: (referralCode: string) => void;

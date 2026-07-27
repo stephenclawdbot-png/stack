@@ -4,8 +4,8 @@ import { GamePage } from "./pages/GamePage";
 import { DocsPage } from "./pages/DocsPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ReferralPage } from "./pages/ReferralPage";
-import { GearIcon, PickaxeIcon, BookIcon, InfoIcon, ShareIcon, LinkButton } from "./components/Icons";
-import { sprites, characters } from "./assets";
+import { PickaxeIcon, BookIcon, InfoIcon, ShareIcon, LinkButton } from "./components/Icons";
+import { sprites } from "./assets";
 
 type Page = "game" | "docs" | "about" | "referral";
 

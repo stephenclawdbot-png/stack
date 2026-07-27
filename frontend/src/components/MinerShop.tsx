@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MINER_TIERS, FACILITY_TIERS } from "../config";
+import { MINER_TIERS } from "../config";
 import { formatStack, formatHashrate } from "../lib/format";
 import { PickaxeIcon } from "./Icons";
 import { minerSprites } from "../assets";

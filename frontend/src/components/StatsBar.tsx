@@ -1,4 +1,4 @@
-import { GearIcon, PickaxeIcon, FactoryIcon } from "./Icons";
+import { PickaxeIcon, FactoryIcon } from "./Icons";
 import type { GameState } from "../lib/useGame";
 import { formatHashrate, formatStack } from "../lib/format";
 import { sprites } from "../assets";
