@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { MINER_TIERS } from "../config";
+import { MINER_TIERS, COMPOUND_DISCOUNT } from "../config";
 import { formatStack, formatHashrate } from "../lib/format";
 import { PickaxeIcon } from "./Icons";
 import { minerSprites } from "../assets";
 
 interface MinerShopProps {
   stackBalance: number;
+  pendingRewards: number;
   onBuy: (tier: number, priceStack: number) => void;
+  onCompound: (tier: number) => void;
   loading: boolean;
 }
 
-export function MinerShop({ stackBalance, onBuy, loading }: MinerShopProps) {
+export function MinerShop({ stackBalance, pendingRewards, onBuy, onCompound, loading }: MinerShopProps) {
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
@@ -55,13 +57,25 @@ export function MinerShop({ stackBalance, onBuy, loading }: MinerShopProps) {
         })}
       </div>
       {selected !== null && (
-        <button
-          onClick={() => onBuy(selected, MINER_TIERS[selected].price)}
-          disabled={loading || stackBalance < MINER_TIERS[selected].price}
-          className="btn-primary w-full mt-3"
-        >
-          {loading ? "Processing..." : `Buy ${MINER_TIERS[selected].name}`}
-        </button>
+        <div className="mt-3 space-y-2">
+          <button
+            onClick={() => onBuy(selected, MINER_TIERS[selected].price)}
+            disabled={loading || stackBalance < MINER_TIERS[selected].price}
+            className="btn-primary w-full"
+          >
+            {loading ? "Processing..." : `Buy ${MINER_TIERS[selected].name}`}
+          </button>
+          <button
+            onClick={() => onCompound(selected)}
+            disabled={loading || pendingRewards < MINER_TIERS[selected].price * (1 - COMPOUND_DISCOUNT)}
+            className="btn-secondary w-full text-sm"
+            title="Pay with pending rewards — no claim needed, 10% cheaper"
+          >
+            {loading
+              ? "Processing..."
+              : `Compound for ${formatStack((MINER_TIERS[selected].price * (1 - COMPOUND_DISCOUNT)).toString())} pending (-10%)`}
+          </button>
+        </div>
       )}
       <div className="mt-3 pt-3 border-t border-border">
         <p className="text-xs text-muted">

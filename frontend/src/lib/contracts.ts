@@ -47,6 +47,7 @@ const REFINERY_ABI = [
   "function enterFacility(string) payable",
   "function claimRewards()",
   "function buyMiner(uint8)",
+  "function compound(uint8)",
   "function placeMiner(uint256,uint8,uint8)",
   "function removeMiner(uint256)",
   "function upgradeFacility()",

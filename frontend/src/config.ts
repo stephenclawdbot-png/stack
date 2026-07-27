@@ -22,6 +22,9 @@ export const EMISSION_PER_DAY = 3_000_000;
 export const EMISSION_PER_SEC = EMISSION_PER_DAY / 86400;
 export const HALVING_INTERVAL = 13_680_000; // seconds
 export const MAX_SUPPLY = 1_000_000_000;
+export const CLAIM_COOLDOWN = 3600; // seconds
+export const COMPOUND_DISCOUNT = 0.1; // compound() price discount
+export const MIN_RUNWAY_DAYS = 60; // emission throttle: pool always covers this
 
 // Miner tiers
 export interface MinerTier {

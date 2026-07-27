@@ -167,7 +167,7 @@ describe("Stack Refinery (treasury model)", () => {
       expect(await refinery.referredVolume(bob.address)).to.be.gt(0);
     });
 
-    it("clips claims to the pool balance and preserves the remainder", async () => {
+    it("throttles emission to preserve pool runway (sustainability guard)", async () => {
       const [deployer, dev, alice] = await ethers.getSigners();
       const token = await (await ethers.getContractFactory("MockStack")).deploy();
       const nft = await (await ethers.getContractFactory("MinerNFT")).deploy();
@@ -176,25 +176,66 @@ describe("Stack Refinery (treasury model)", () => {
       ).deploy(await token.getAddress(), await nft.getAddress(), dev.address, RATE_PER_SEC);
       await nft.setRefinery(await refinery.getAddress());
 
-      // Tiny pool: 1000 STACK
+      // Tiny pool: 1000 STACK. Runway cap = 1000 / 60 days.
       await token.connect(deployer).transfer(await refinery.getAddress(), ethers.parseEther("1000"));
       await refinery.connect(alice).enterFacility("", { value: ENTRY_FEE });
-      await time.increase(DAY); // accrues ~3M, pool has 1000
+      await time.increase(DAY);
+
+      // Schedule says ~3M/day, but the guard throttles to ~16.7/day
+      const pending = await refinery.pendingRewards(alice.address);
+      expect(pending).to.be.closeTo(ethers.parseEther("16.67"), ethers.parseEther("1"));
+      // effective rate view reflects the throttle
+      expect(await refinery.emissionRatePerSec()).to.be.lt(RATE_PER_SEC);
+
+      // pool can never be flash-drained: claim pays out only what accrued
+      await refinery.connect(alice).claimRewards();
+      expect(await refinery.rewardPool()).to.be.gt(ethers.parseEther("980"));
+
+      // refunding the pool restores the full schedule rate
+      await token.connect(deployer).transfer(await refinery.getAddress(), ethers.parseEther("500000000"));
+      expect(await refinery.emissionRatePerSec()).to.equal(RATE_PER_SEC);
+      await time.increase(DAY);
+      expect(await refinery.pendingRewards(alice.address)).to.be.closeTo(
+        ethers.parseEther("3000000"), ethers.parseEther("2000"));
+    });
+
+    it("enforces the 1h claim cooldown", async () => {
+      const { refinery, alice } = await loadFixture(deployFixture);
+      await refinery.connect(alice).enterFacility("", { value: ENTRY_FEE });
+      // entry stamps lastClaim, so claiming immediately is on cooldown
+      await time.increase(30 * 60);
+      await expect(refinery.connect(alice).claimRewards()).to.be.revertedWithCustomError(
+        refinery, "Cooldown");
+      await time.increase(31 * 60);
+      await refinery.connect(alice).claimRewards();
+      // and again right after: cooldown
+      await expect(refinery.connect(alice).claimRewards()).to.be.revertedWithCustomError(
+        refinery, "Cooldown");
+    });
+
+    it("compound() mints a miner from pending at a 10% discount, burning from the pool", async () => {
+      const { refinery, token, nft, alice } = await loadFixture(deployFixture);
+      await refinery.connect(alice).enterFacility("", { value: ENTRY_FEE });
+      await time.increase(DAY); // accrue ~3M pending
 
       const pendingBefore = await refinery.pendingRewards(alice.address);
-      await refinery.connect(alice).claimRewards();
-      // pool drained, player got 95.5% of the 1000
-      expect(await refinery.rewardPool()).to.be.lt(ethers.parseEther("50"));
-      expect(await token.balanceOf(alice.address)).to.be.closeTo(
-        ethers.parseEther("955"), ethers.parseEther("1"));
-      // the rest is still pending, claimable after a refund
-      const pendingAfter = await refinery.pendingRewards(alice.address);
-      expect(pendingAfter).to.be.closeTo(
-        pendingBefore - ethers.parseEther("1000"), ethers.parseEther("100"));
+      const poolBefore = await refinery.rewardPool();
+      await refinery.connect(alice).compound(1); // T1: 1000 STACK -> 900 compounded
 
-      await token.connect(deployer).transfer(await refinery.getAddress(), ethers.parseEther("5000000"));
-      await refinery.connect(alice).claimRewards();
-      expect(await token.balanceOf(alice.address)).to.be.gt(ethers.parseEther("955"));
+      expect(await nft.balanceOf(alice.address)).to.equal(1);
+      expect(await nft.minerTier(1)).to.equal(1);
+      // no tokens ever reached alice's wallet
+      expect(await token.balanceOf(alice.address)).to.equal(0);
+      // pending dropped by the discounted price
+      const pendingAfter = await refinery.pendingRewards(alice.address);
+      expect(pendingBefore - pendingAfter).to.be.closeTo(
+        ethers.parseEther("900"), ethers.parseEther("200"));
+      // 75% of the discounted price burned from the pool
+      expect(await token.balanceOf(DEAD)).to.equal(ethers.parseEther("675"));
+      expect((poolBefore - await refinery.rewardPool())).to.equal(ethers.parseEther("675"));
+      // rig is placeable like any purchased miner
+      await refinery.connect(alice).placeMiner(1, 1, 0);
+      expect(await refinery.playerHashrate(alice.address)).to.equal(6);
     });
 
     it("rejects self-referral and 2-wallet loops", async () => {

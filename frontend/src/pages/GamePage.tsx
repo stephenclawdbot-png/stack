@@ -77,7 +77,9 @@ export function GamePage() {
           <RefineryGrid state={game.state} onUpgrade={game.upgradeFacility} loading={game.loading} />
           <MinerShop
             stackBalance={game.state.stackBalance}
+            pendingRewards={game.state.pendingRewards}
             onBuy={game.buyMiner}
+            onCompound={game.compound}
             loading={game.loading}
           />
         </div>

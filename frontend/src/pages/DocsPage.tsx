@@ -41,6 +41,33 @@ export function DocsPage() {
       </section>
 
       <section>
+        <h2 className="text-xl font-heading mb-3">Why This Can't Rug Itself</h2>
+        <div className="panel-elevated space-y-3 text-sm text-muted">
+          <p>
+            <span className="text-text-strong font-semibold">Runway guard.</span>{" "}
+            Emission is throttled on-chain so the reward pool always covers at least 60 days
+            at the current rate. If the pool shrinks, emission shrinks with it — the pool can
+            never abruptly run dry. Every purchase refills it (25% of every price), which
+            raises the emission cap back up. The math self-balances.
+          </p>
+          <p>
+            <span className="text-text-strong font-semibold">Compounding beats dumping.</span>{" "}
+            You can convert pending rewards straight into miners at a 10% discount — no claim,
+            no cooldown, no sell pressure. 75% of every compound is burned forever.
+          </p>
+          <p>
+            <span className="text-text-strong font-semibold">Claim cooldown.</span>{" "}
+            Claims are limited to once per hour per wallet, smoothing out dump waves.
+          </p>
+          <p>
+            <span className="text-text-strong font-semibold">Everything burns.</span>{" "}
+            75% of every miner purchase and facility upgrade goes to the dead address.
+            Supply is fixed at 1B and only ever goes down.
+          </p>
+        </div>
+      </section>
+
+      <section>
         <h2 className="text-xl font-heading mb-3">Miner Tiers</h2>
         <div className="space-y-2">
           {MINER_TIERS.map((tier) => (

@@ -86,6 +86,20 @@ stack-refinery/
 - **Burn**: 75% of miner purchases sent to 0xdEaD forever, 25% recycles
   into the reward pool (launchpad tokens have no burn function)
 
+### Sustainability mechanics (ours — KittyMining doesn't have these)
+- **Runway guard**: effective emission = min(halving schedule,
+  rewardPool / 60 days), recomputed at every interaction. The pool
+  mathematically cannot run dry — as it shrinks, emission shrinks; as
+  purchases recycle 25% back in, emission recovers. This also makes the
+  EMISSION_PER_DAY deploy setting forgiving: oversize it and the guard
+  throttles automatically.
+- **Compounding**: `compound(tier)` converts pending rewards straight
+  into a miner NFT at a 10% discount — no claim, no referral carve-out,
+  no cooldown, zero sell pressure; 75% of the discounted price burns
+  from the pool to 0xdEaD.
+- **Claim cooldown**: 1 hour per wallet (CLAIM_COOLDOWN), smoothing dump
+  waves. Entry stamps lastClaim, so the first claim is ≥1h after entry.
+
 ### Miner Tiers
 | Tier | Name | Hashrate | Price (STACK) | Cells | Power Draw | NFT? |
 |------|------|----------|-------------|-------|-----------|------|
@@ -251,11 +265,9 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
   supply — the game holds a reward pool instead of minting. Claims are
   clipped to `rewardPool()`; unpaid remainder stays pending and becomes
   claimable after refunding. `emissionRatePerSec` is a constructor param
-  (EMISSION_PER_DAY env in deploy script) — SIZE IT TO THE TREASURY: at
-  3M/day the lifetime schedule sums to ~950M STACK, which assumes the
-  game treasury holds most of the supply. If the dev-buy allocation is
-  smaller, lower the emission accordingly or the pool will drain and
-  claims will stall until refunded.
+  (EMISSION_PER_DAY env in deploy script). The runway guard makes sizing
+  forgiving — emission is auto-throttled to rewardPool/60d regardless —
+  but still set it sensibly: it acts as the emission *ceiling*.
 - **NFT wiring is one-shot**: `setRefinery()` can only be called once on
   MinerNFT.
 - **SafeERC20 everywhere** — launchpad token implementations vary.
@@ -289,8 +301,9 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [x] ~~StackToken.sol~~ removed — STACK is external (ponz.family, 1B fixed supply); MockStack.sol stands in for tests/testnet
 - [x] Write MinerNFT.sol (ERC-721 Enumerable, tier + hashrate per token, refinery-only mint)
 - [x] Write StackRefinery.sol (entry, emission + halving, treasury-paid rewards with pool clipping, fundRewards, buy/place/remove miners with 0xdEaD burns, upgrades, referrals, pause, fee withdrawal)
+- [x] Sustainability mechanics: 60-day runway guard on emission, compound(tier) at 10% discount, 1h claim cooldown
 - [x] Write deployment script (scripts/deploy.ts — takes STACK_TOKEN_ADDRESS, deploys NFT+refinery, wires, prints frontend config; auto-deploys MockStack on non-mainnet)
-- [x] Write tests (test/StackRefinery.test.ts — 20 passing: treasury funding, pool clipping + refund recovery, emission, halving boundary, referral routing/loops, dead-address burns, grid/power limits, cooldowns, admin)
+- [x] Write tests (test/StackRefinery.test.ts — 22 passing: treasury funding, runway throttle + refund recovery, compound, claim cooldown, emission, halving boundary, referral routing/loops, dead-address burns, grid/power limits, cooldowns, admin)
 - [x] Compile green (`npm run compile` / `npm test` in contracts/)
 
 ### Phase 4: Wire Frontend to Contracts [IN PROGRESS]

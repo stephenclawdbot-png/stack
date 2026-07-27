@@ -26,6 +26,7 @@ export interface GameState {
   nextHalving: number;
   lastUpgrade: number;
   upgradeCooldown: number;
+  lastClaim: number;
 }
 
 export function useGame() {
@@ -52,7 +53,7 @@ export function useGame() {
         hasFacility, facTier, gridSize, power, powerUsed,
         playerHash, networkHash, pending, rewardsPaid, burned, pool,
         stackBal, minerCount, refCode, refAddr, refVol, refTier,
-        emissionRate, halving, lastUpg, cooldown,
+        emissionRate, halving, lastUpg, cooldown, lastClm,
       ] = await Promise.all([
         refinery.hasFacility(wallet.address),
         refinery.facilityTier(wallet.address),
@@ -75,6 +76,7 @@ export function useGame() {
         refinery.nextHalvingTimestamp(),
         refinery.facilityLastUpgrade(wallet.address),
         refinery.UPGRADE_COOLDOWN(),
+        refinery.lastClaim(wallet.address),
       ]);
 
       setState({
@@ -99,6 +101,7 @@ export function useGame() {
         nextHalving: Number(halving),
         lastUpgrade: Number(lastUpg),
         upgradeCooldown: Number(cooldown),
+        lastClaim: Number(lastClm),
       });
     } catch (err) {
       // Contracts not deployed yet or not connected
@@ -190,6 +193,25 @@ export function useGame() {
     }
   }, [wallet, refresh, ensureAllowance]);
 
+  // Compound pending rewards straight into a miner (10% off, no claim tx)
+  const compound = useCallback(async (tier: number) => {
+    if (!wallet.address) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const signer = await wallet.getSigner();
+      if (!signer) throw new Error("No signer");
+      const refinery = getRefineryContract(signer);
+      const tx = await refinery.compound(tier);
+      await tx.wait();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to compound");
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet, refresh]);
+
   const placeMiner = useCallback(async (tokenId: number, x: number, y: number) => {
     if (!wallet.address) return;
     setLoading(true);
@@ -278,6 +300,7 @@ export function useGame() {
     enterFacility,
     claimRewards,
     buyMiner,
+    compound,
     placeMiner,
     removeMiner,
     upgradeFacility,

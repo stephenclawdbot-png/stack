@@ -39,8 +39,19 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant HALVING_INTERVAL = 13_680_000; // seconds
     uint256 public constant UPGRADE_COOLDOWN = 24 hours;
     uint256 public constant REMOVAL_COOLDOWN = 24 hours;
+    uint256 public constant CLAIM_COOLDOWN = 1 hours;
     uint256 public constant PRECISION = 1e12;
     address public constant DEAD = 0x000000000000000000000000000000000000dEaD;
+
+    /// @notice Sustainability: emission is throttled so the reward pool
+    ///         always covers at least this many seconds at the current
+    ///         rate. The pool can therefore never abruptly run dry — at
+    ///         worst it decays while purchases refill it.
+    uint256 public constant MIN_RUNWAY = 60 days;
+
+    /// @notice Compounding pending rewards into a miner is 10% cheaper
+    ///         than claiming and buying, and skips the referral carve-out.
+    uint256 public constant COMPOUND_DISCOUNT_BPS = 1_000;
 
     uint256 public constant REFERRAL_CUT_BPS = 450; // total carve-out
     uint256 public constant TIER2_THRESHOLD = 500_000e18; // gross referred
@@ -208,11 +219,26 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     // Emission accounting
     // ------------------------------------------------------------------
 
-    /// @notice Current emission rate (wei STACK / sec) after halvings.
+    /// @dev Schedule rate for a halving epoch, before the runway throttle.
+    function _scheduleRate(uint256 epoch) internal view returns (uint256) {
+        if (epoch > 63) return 0;
+        return initialRatePerSec >> epoch;
+    }
+
+    /// @dev Runway throttle: never emit faster than the pool can sustain
+    ///      for MIN_RUNWAY. Recomputed at every state-changing interaction
+    ///      (the pool is constant in between, so integration stays exact).
+    function _runwayCap() internal view returns (uint256) {
+        return rewardPool() / MIN_RUNWAY;
+    }
+
+    /// @notice Current effective emission rate (wei STACK / sec) after
+    ///         halvings and the sustainability throttle.
     function emissionRatePerSec() public view returns (uint256) {
-        uint256 halvings = (block.timestamp - launchTime) / HALVING_INTERVAL;
-        if (halvings > 63) return 0;
-        return initialRatePerSec >> halvings;
+        uint256 epoch = (block.timestamp - launchTime) / HALVING_INTERVAL;
+        uint256 rate = _scheduleRate(epoch);
+        uint256 cap = _runwayCap();
+        return rate < cap ? rate : cap;
     }
 
     function nextHalvingTimestamp() external view returns (uint256) {
@@ -230,12 +256,14 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         lastAccUpdate = to;
         if (totalNetworkHashrate == 0) return;
 
+        uint256 cap = _runwayCap();
         uint256 acc = accPerHash;
         while (from < to) {
             uint256 epoch = (from - launchTime) / HALVING_INTERVAL;
             uint256 epochEnd = launchTime + (epoch + 1) * HALVING_INTERVAL;
             uint256 segEnd = epochEnd < to ? epochEnd : to;
-            uint256 rate = epoch > 63 ? 0 : initialRatePerSec >> epoch;
+            uint256 rate = _scheduleRate(epoch);
+            if (cap < rate) rate = cap;
             acc += (rate * (segEnd - from) * PRECISION) / totalNetworkHashrate;
             from = segEnd;
         }
@@ -260,12 +288,14 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         }
         uint256 from = lastAccUpdate;
         uint256 to = block.timestamp;
+        uint256 cap = _runwayCap();
         uint256 acc = accPerHash;
         while (from < to) {
             uint256 epoch = (from - launchTime) / HALVING_INTERVAL;
             uint256 epochEnd = launchTime + (epoch + 1) * HALVING_INTERVAL;
             uint256 segEnd = epochEnd < to ? epochEnd : to;
-            uint256 rate = epoch > 63 ? 0 : initialRatePerSec >> epoch;
+            uint256 rate = _scheduleRate(epoch);
+            if (cap < rate) rate = cap;
             acc += (rate * (segEnd - from) * PRECISION) / totalNetworkHashrate;
             from = segEnd;
         }
@@ -421,6 +451,8 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         Facility storage f = facilities[msg.sender];
         if (!f.exists) revert NoFacility();
 
+        if (block.timestamp < f.lastClaim + CLAIM_COOLDOWN) revert Cooldown();
+
         _settle(msg.sender);
         uint256 gross = f.unclaimed;
         if (gross == 0) revert NothingToClaim();
@@ -458,6 +490,34 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
 
         stackToken.safeTransfer(msg.sender, net);
         emit RewardsClaimed(msg.sender, net, gross);
+    }
+
+    /// @notice Compound pending rewards straight into a miner NFT at a 10%
+    ///         discount — no claim, no referral carve-out, no cooldown.
+    ///         The burn share (75% of the discounted price) leaves the pool
+    ///         for 0xdEaD; the rest simply stays in the pool. This is the
+    ///         sustainability loop: rewards that never hit the market.
+    function compound(uint8 tier) external whenNotPaused nonReentrant {
+        if (tier < 1 || tier > 4) revert InvalidTier();
+        Facility storage f = facilities[msg.sender];
+        if (!f.exists) revert NoFacility();
+
+        _settle(msg.sender);
+        uint256 cost = (minerTiers[tier].price * (10_000 - COMPOUND_DISCOUNT_BPS)) / 10_000;
+        if (f.unclaimed < cost) revert NothingToClaim();
+
+        uint256 burnAmount = (cost * 75) / 100;
+        uint256 pool = rewardPool();
+        if (burnAmount > pool) revert NothingToClaim();
+
+        f.unclaimed -= cost;
+        totalRewardsPaid += cost;
+        totalBurned += burnAmount;
+        stackToken.safeTransfer(DEAD, burnAmount);
+        // the remaining 25% of the cost never leaves the pool
+
+        uint256 tokenId = minerNFT.mint(msg.sender, tier);
+        emit MinerPurchased(msg.sender, tier, tokenId);
     }
 
     /// @notice Register a permanent referral code (5–32 chars, a-z0-9).

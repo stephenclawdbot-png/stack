@@ -1,5 +1,6 @@
 import type { GameState } from "../lib/useGame";
-import { formatStack } from "../lib/format";
+import { formatStack, timeUntil } from "../lib/format";
+import { CLAIM_COOLDOWN } from "../config";
 
 interface ClaimPanelProps {
   state: GameState;
@@ -8,6 +9,9 @@ interface ClaimPanelProps {
 }
 
 export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
+  const cooldownEnds = state.lastClaim + CLAIM_COOLDOWN;
+  const onCooldown = Date.now() / 1000 < cooldownEnds;
+
   return (
     <div className="panel-elevated">
       <div className="flex items-center justify-between">
@@ -19,10 +23,14 @@ export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
         </div>
         <button
           onClick={onClaim}
-          disabled={loading || state.pendingRewards <= 0}
+          disabled={loading || state.pendingRewards <= 0 || onCooldown}
           className="btn-primary text-lg px-8"
         >
-          {loading ? "Claiming..." : "Claim"}
+          {loading
+            ? "Claiming..."
+            : onCooldown
+              ? `Cooldown: ${timeUntil(cooldownEnds)}`
+              : "Claim"}
         </button>
       </div>
       {state.pendingRewards > 0 && (
@@ -30,6 +38,9 @@ export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
           Earning {formatStack((state.emissionRatePerSec * (state.playerHashrate / state.totalNetworkHashrate)).toString())} STACK/sec
         </div>
       )}
+      <div className="mt-1 text-xs text-muted">
+        Tip: compounding pending into miners is 10% cheaper and has no cooldown.
+      </div>
     </div>
   );
 }
