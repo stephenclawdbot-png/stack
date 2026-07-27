@@ -1,8 +1,8 @@
 // Robinhood Chain (EVM L2)
 export const CHAIN_ID = 4663;
 export const CHAIN_NAME = "Robinhood Chain";
-export const RPC_URL = "https://rpc.robinhood.com";
-export const EXPLORER_URL = "https://explorer.robinhood.com";
+export const RPC_URL = "https://rpc.mainnet.chain.robinhood.com";
+export const EXPLORER_URL = "https://robinhoodchain.blockscout.com";
 export const NATIVE_CURRENCY = { name: "Ether", symbol: "ETH", decimals: 18 };
 
 // Entry fee (0.001 ETH)

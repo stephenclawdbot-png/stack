@@ -6,7 +6,8 @@
   "scripts": {
     "test": "hardhat test",
     "compile": "hardhat compile",
-    "deploy:robinhood": "hardhat run scripts/deploy.ts --network robinhood"
+    "deploy:robinhood": "hardhat run scripts/deploy.ts --network robinhood",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet"
   },
   "keywords": [],
   "author": "",

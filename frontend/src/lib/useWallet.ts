@@ -82,9 +82,9 @@ export function useWallet() {
             {
               chainId: "0x" + targetChainId.toString(16),
               chainName: "Robinhood Chain",
-              rpcUrls: ["https://rpc.robinhood.com"],
+              rpcUrls: ["https://rpc.mainnet.chain.robinhood.com"],
               nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-              blockExplorerUrls: ["https://explorer.robinhood.com"],
+              blockExplorerUrls: ["https://robinhoodchain.blockscout.com"],
             },
           ],
         });

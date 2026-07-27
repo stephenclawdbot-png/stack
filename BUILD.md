@@ -214,8 +214,12 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 ## Implementation Notes (filled during Phase 3)
 
 - **Solidity 0.8.28, EVM target cancun** — OpenZeppelin v5.6 requires the
-  `mcopy` opcode. Verify Robinhood Chain supports Cancun opcodes before
-  mainnet deploy; if not, downgrade OZ to 5.0.x and retarget shanghai.
+  `mcopy` opcode. VERIFIED compatible: Robinhood Chain mainnet (live since
+  2026-07-01) runs Arbitrum Nitro v3.11.3, which supports Cancun opcodes.
+  Confirmed via RPC: chainId 0x1237 (4663) at
+  https://rpc.mainnet.chain.robinhood.com; explorer is
+  https://robinhoodchain.blockscout.com (Blockscout). Testnet chainId is
+  46630. Docs: https://docs.robinhood.com/chain/
 - **Grid occupancy** is a uint64 bitmask with a fixed stride of 8
   (`bit = y * 8 + x`), so upgrading facility size never re-indexes placed
   miners. 2x2 rigs occupy (x,y)..(x+1,y+1).
@@ -294,7 +298,8 @@ cd contracts
 npm install
 npm run compile
 npm test
-npm run deploy:robinhood   # needs DEPLOYER_PRIVATE_KEY (+ optional ROBINHOOD_RPC_URL, DEV_WALLET) in ../.env.local
+npm run deploy:testnet     # dry-run on testnet (chainId 46630) first
+npm run deploy:robinhood   # mainnet; needs DEPLOYER_PRIVATE_KEY (+ optional ROBINHOOD_RPC_URL, DEV_WALLET) in ../.env.local
 ```
 The deploy script wires token/NFT to the refinery and prints the three
 addresses to paste into `frontend/src/config.ts` ADDRESSES.
