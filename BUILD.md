@@ -294,6 +294,7 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [x] Select best frames from review candidates
 - [x] Download assets to frontend/src/assets/
 - [x] Wire sprites into UI components
+- [x] Pixel-game design system: panel art as border-image frames, claim console as live UI, grid-panel floor, vault entry hero, skyline footer, pixel fonts (Press Start 2P / VT323), scanlines, ?demo=1 preview mode
 
 ### Phase 3: Solidity Contracts [DONE — reworked for ponz.family treasury model]
 - [x] Set up Hardhat in contracts/ directory (Hardhat 2.29, toolbox 5, TS pinned to 5.4.5 — newer TS breaks ts-node)
