@@ -29,6 +29,35 @@ export interface GameState {
   lastClaim: number;
 }
 
+/// Client-side extrapolation of pending rewards between polls — makes the
+/// counter tick up every frame like a proper idle game.
+export function useLivePending(state: GameState | null): number {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!state) {
+      setDisplay(0);
+      return;
+    }
+    const base = state.pendingRewards;
+    const share =
+      state.totalNetworkHashrate > 0
+        ? state.playerHashrate / state.totalNetworkHashrate
+        : 0;
+    const rate = state.emissionRatePerSec * share;
+    const start = performance.now();
+    let raf = 0;
+    const tick = () => {
+      setDisplay(base + (rate * (performance.now() - start)) / 1000);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [state]);
+
+  return display;
+}
+
 export function useGame() {
   const wallet = useWallet();
   const [state, setState] = useState<GameState | null>(null);

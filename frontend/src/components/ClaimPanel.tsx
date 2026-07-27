@@ -1,4 +1,5 @@
 import type { GameState } from "../lib/useGame";
+import { useLivePending } from "../lib/useGame";
 import { formatStack, timeUntil } from "../lib/format";
 import { CLAIM_COOLDOWN } from "../config";
 import { uiPanels } from "../assets";
@@ -10,9 +11,16 @@ interface ClaimPanelProps {
 }
 
 export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
+  const livePending = useLivePending(state);
   const cooldownEnds = state.lastClaim + CLAIM_COOLDOWN;
   const onCooldown = Date.now() / 1000 < cooldownEnds;
   const disabled = loading || state.pendingRewards <= 0 || onCooldown;
+
+  // full precision so the tick-up is visible every second
+  const liveText = livePending.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -27,17 +35,17 @@ export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
           src={uiPanels.claimPanel}
           alt="Claim console"
           className={`w-full pixelated transition-none ${
-            disabled ? "saturate-50 brightness-90" : "group-hover:brightness-110"
+            disabled ? "saturate-50 brightness-90" : "claim-ready group-hover:brightness-110"
           }`}
         />
         {/* LED readout on the console's lower plate */}
-        <div className="absolute left-[24%] right-[24%] bottom-[13%] bg-black/70 border border-accent/40 px-2 py-0.5">
-          <span className="led-text text-xl md:text-2xl whitespace-nowrap">
+        <div className="absolute left-[18%] right-[18%] bottom-[13%] bg-black/70 border border-accent/40 px-2 py-0.5">
+          <span className="led-text text-xl md:text-2xl whitespace-nowrap tabular-nums">
             {loading
               ? "> PROCESSING..."
               : onCooldown
-                ? `> COOLDOWN ${timeUntil(cooldownEnds)}`
-                : `> PENDING: ${formatStack(state.pendingRewards)} STACK`}
+                ? `> COOLDOWN ${timeUntil(cooldownEnds)} | ${liveText}`
+                : `> PENDING: ${liveText} STACK`}
           </span>
         </div>
       </button>

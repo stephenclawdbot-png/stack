@@ -28,15 +28,19 @@ export function MinerShop({ stackBalance, pendingRewards, onBuy, onCompound, loa
             <button
               key={tier.id}
               onClick={() => setSelected(tier.id)}
-              className={`w-full text-left p-2.5 border-2 pixel-corners bg-black/40 ${
+              className={`group w-full text-left p-2.5 border-2 pixel-corners bg-black/40 ${
                 selected === tier.id
                   ? "border-accent bg-accent-soft"
                   : "border-white/10 hover:border-accent/50"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-black/50 border border-white/10 flex items-center justify-center shrink-0">
-                  <img src={minerSprites[tier.id]} alt={tier.name} className="w-10 h-10 pixelated object-contain" />
+                <div className="w-12 h-12 bg-black/50 border border-white/10 flex items-center justify-center shrink-0 overflow-visible">
+                  <img
+                    src={minerSprites[tier.id]}
+                    alt={tier.name}
+                    className="w-10 h-10 pixelated object-contain transition-transform duration-100 group-hover:scale-125"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">

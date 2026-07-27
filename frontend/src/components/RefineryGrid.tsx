@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { GameState } from "../lib/useGame";
 import { FACILITY_TIERS } from "../config";
 import { FactoryIcon } from "./Icons";
@@ -9,12 +9,44 @@ interface RefineryGridProps {
   state: GameState;
   onUpgrade: () => void;
   loading: boolean;
+  /** Tier of each placed rig, in placement order (0 = hand drill). */
+  placedTiers?: number[];
 }
 
-export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
+interface Particle {
+  id: number;
+  left: number;
+  top: number;
+}
+
+export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: RefineryGridProps) {
   const [selectedCells, setSelectedCells] = useState<Set<number>>(new Set());
+  const [particles, setParticles] = useState<Particle[]>([]);
   const tier = FACILITY_TIERS[state.facilityTier - 1];
   const grid = Array(tier.cells).fill(null);
+
+  // Floating +STACK particles drift up from working rigs
+  useEffect(() => {
+    if (state.minerCount === 0 && state.playerHashrate === 0) return;
+    const interval = window.setInterval(() => {
+      const p: Particle = {
+        id: Date.now() + Math.random(),
+        left: 18 + Math.random() * 55,
+        top: 18 + Math.random() * 45,
+      };
+      setParticles((ps) => [...ps.slice(-4), p]);
+      window.setTimeout(
+        () => setParticles((ps) => ps.filter((q) => q.id !== p.id)),
+        1800
+      );
+    }, 2100);
+    return () => clearInterval(interval);
+  }, [state.minerCount, state.playerHashrate]);
+
+  // sprite for the rig in a given occupied slot; hand drill first, then
+  // whatever tiers the player placed
+  const rigSprite = (idx: number) =>
+    minerSprites[placedTiers?.[idx] ?? (idx === 0 ? 0 : 1)] ?? minerSprites[1];
 
   const upgradeAvailable = state.lastUpgrade > 0
     ? Date.now() / 1000 > state.lastUpgrade + state.upgradeCooldown
@@ -89,9 +121,9 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
               >
                 {occupied ? (
                   <img
-                    src={minerSprites[0]}
+                    src={rigSprite(idx)}
                     alt="miner"
-                    className="w-[88%] h-[88%] pixelated object-contain animate-pulse-glow drop-shadow-[0_0_6px_rgba(253,180,42,0.45)]"
+                    className="w-[88%] h-[88%] pixelated object-contain anim-mine drop-shadow-[0_0_6px_rgba(253,180,42,0.45)]"
                   />
                 ) : selected ? (
                   <div className="w-2 h-2 bg-secondary" />
@@ -102,6 +134,15 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
             );
           })}
         </div>
+        {particles.map((p) => (
+          <span
+            key={p.id}
+            className="particle-float led-text"
+            style={{ left: `${p.left}%`, top: `${p.top}%` }}
+          >
+            +STACK
+          </span>
+        ))}
         <img src={sprites.pipeValve} alt="" className="absolute -bottom-1 -left-1 w-7 pixelated" />
       </div>
 

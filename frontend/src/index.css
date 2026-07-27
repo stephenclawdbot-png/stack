@@ -218,6 +218,43 @@
     image-rendering: crisp-edges;
   }
 
+  /* --- Game juice ------------------------------------------------------- */
+  /* placed rigs vibrate while mining */
+  .anim-mine {
+    animation: mine-jitter 0.5s steps(2) infinite;
+  }
+
+  /* mascot idle bob */
+  .mascot-idle {
+    animation: idle-bob 1.6s steps(3) infinite;
+  }
+
+  /* floating +STACK reward particles over the grid */
+  .particle-float {
+    position: absolute;
+    font-size: 17px;
+    pointer-events: none;
+    z-index: 10;
+    animation: float-up 1.8s steps(9) forwards;
+    white-space: nowrap;
+  }
+
+  /* pixel smoke puffs rising from the skyline */
+  .smoke-puff {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: #9aa08a;
+    opacity: 0;
+    pointer-events: none;
+    animation: smoke-rise 3.2s steps(7) infinite;
+  }
+
+  /* claim console glows when a claim is ready */
+  .claim-ready {
+    animation: ready-glow 1.8s ease-in-out infinite;
+  }
+
   /* Terminal-style input */
   .input-terminal {
     @apply font-mono text-accent bg-black/60 w-full;
@@ -233,6 +270,35 @@
     border-color: #fdb42a;
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 10px rgba(253, 180, 42, 0.25);
   }
+}
+
+@keyframes mine-jitter {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+}
+
+@keyframes idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-38px); }
+}
+
+@keyframes smoke-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.8); }
+  20% { opacity: 0.55; }
+  100% { opacity: 0; transform: translateY(-48px) scale(1.6); }
+}
+
+@keyframes ready-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.22) saturate(1.15); }
 }
 
 /* Custom scrollbar */

@@ -63,7 +63,7 @@ export default function App() {
           <img
             src={brand.mascot}
             alt="Stack Boy"
-            className="absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)]"
+            className="absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated mascot-idle drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)]"
           />
           <div className="absolute left-28 md:left-44 right-3 bottom-2 md:bottom-3 [text-shadow:2px_2px_0_#000]">
             <div className="font-heading text-sm md:text-xl text-accent">
@@ -85,11 +85,18 @@ export default function App() {
 
       {/* Factory skyline sitting on the footer */}
       <div className="max-w-6xl mx-auto w-full px-4 overflow-hidden">
-        <div className="flex items-end justify-center gap-3 md:gap-6 translate-y-[3px] opacity-95">
+        <div className="relative flex items-end justify-center gap-3 md:gap-6 translate-y-[3px] opacity-95">
           <img src={sprites.crane} alt="" className="h-20 md:h-28 pixelated" />
           <img src={sprites.storageTank} alt="" className="h-14 md:h-20 pixelated" />
-          <img src={sprites.refineryBuilding} alt="" className="h-16 md:h-24 pixelated" />
-          <img src={sprites.smelterFurnace} alt="" className="h-14 md:h-20 pixelated hidden sm:block" />
+          <span className="relative">
+            <span className="smoke-puff left-[30%] -top-2" />
+            <span className="smoke-puff left-[55%] -top-1 [animation-delay:1.1s]" />
+            <img src={sprites.refineryBuilding} alt="" className="h-16 md:h-24 pixelated" />
+          </span>
+          <span className="relative hidden sm:block">
+            <span className="smoke-puff left-[45%] -top-2 [animation-delay:2s]" />
+            <img src={sprites.smelterFurnace} alt="" className="h-14 md:h-20 pixelated" />
+          </span>
           <img src={sprites.conveyorBelt} alt="" className="h-12 md:h-16 pixelated hidden md:block" />
           <img src={sprites.orePile} alt="" className="h-8 md:h-10 pixelated" />
           <img src={sprites.controlTerminal} alt="" className="h-10 md:h-14 pixelated hidden sm:block" />

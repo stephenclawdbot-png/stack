@@ -1,9 +1,11 @@
 import { PickaxeIcon, FactoryIcon } from "./Icons";
 import type { GameState } from "../lib/useGame";
+import { useLivePending } from "../lib/useGame";
 import { formatHashrate, formatStack } from "../lib/format";
 import { brand } from "../assets";
 
 export function StatsBar({ state }: { state: GameState | null }) {
+  const livePending = useLivePending(state);
   if (!state) {
     return (
       <div className="grid grid-cols-3 gap-3">
@@ -34,7 +36,7 @@ export function StatsBar({ state }: { state: GameState | null }) {
           <img src={brand.bottlecap} alt="STACK" className="w-6 h-6 pixelated" />
           <span className="stat-label">Pending STACK</span>
         </div>
-        <div className="stat-value text-accent">{formatStack(state.pendingRewards.toString())}</div>
+        <div className="stat-value text-accent tabular-nums">{formatStack(livePending)}</div>
         <div className="text-base text-muted">{state.emissionRatePerSec > 0 ? `${formatStack(state.emissionRatePerSec.toString())}/sec total` : ""}</div>
       </div>
 

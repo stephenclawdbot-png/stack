@@ -44,7 +44,7 @@ export function GamePage() {
         <StatsBar state={DEMO_STATE} />
         <ClaimPanel state={DEMO_STATE} onClaim={noop} loading={false} />
         <div className="grid md:grid-cols-2 gap-4 items-start">
-          <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} />
+          <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} placedTiers={[0, 1, 2]} />
           <MinerShop
             stackBalance={DEMO_STATE.stackBalance}
             pendingRewards={DEMO_STATE.pendingRewards}
