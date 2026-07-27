@@ -79,13 +79,18 @@ stack-refinery/
 - **Cap accounting**: Burned tokens still count against the 100M cap
 
 ### Miner Tiers
-| Tier | Name | Hashrate | Price (STACK) | Cells | NFT? |
-|------|------|----------|-------------|-------|------|
-| T0 | Hand Drill | 1 | Free | 1 | No |
-| T1 | Drill Rig | 5 | 100 | 1 | Yes |
-| T2 | Pump Jack | 25 | 500 | 1 | Yes |
-| T3 | Excavator | 100 | 2,000 | 4 (2x2) | Yes |
-| T4 | Mega Rig | 500 | 8,000 | 4 (2x2) | Yes |
+| Tier | Name | Hashrate | Price (STACK) | Cells | Power Draw | NFT? |
+|------|------|----------|-------------|-------|-----------|------|
+| T0 | Hand Drill | 1 | Free | 1 | 1 | No |
+| T1 | Drill Rig | 5 | 100 | 1 | 3 | Yes |
+| T2 | Pump Jack | 25 | 500 | 1 | 8 | Yes |
+| T3 | Excavator | 100 | 2,000 | 4 (2x2) | 20 | Yes |
+| T4 | Mega Rig | 500 | 8,000 | 4 (2x2) | 60 | Yes |
+
+Power draw per tier was unspecified in the original design; the values above
+are now canonical (implemented in StackRefinery.sol). They size facility
+power so each facility tier meaningfully constrains loadouts (e.g. Starter
+Site's 10 power fits the Hand Drill + one T2, or Hand Drill + three T1s).
 
 ### Facility Tiers
 | Tier | Name | Grid | Cells | Power | Upgrade Cost |
@@ -206,6 +211,29 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 2. Mining Foreman (48px, 8-dir) - grey hat, clipboard, yellow vest - processing
 3. Drill Bot (48px, 8-dir) - mechanical mining automaton - processing
 
+## Implementation Notes (filled during Phase 3)
+
+- **Solidity 0.8.28, EVM target cancun** — OpenZeppelin v5.6 requires the
+  `mcopy` opcode. Verify Robinhood Chain supports Cancun opcodes before
+  mainnet deploy; if not, downgrade OZ to 5.0.x and retarget shanghai.
+- **Grid occupancy** is a uint64 bitmask with a fixed stride of 8
+  (`bit = y * 8 + x`), so upgrading facility size never re-indexes placed
+  miners. 2x2 rigs occupy (x,y)..(x+1,y+1).
+- **Emission accounting** is a masterchef-style accumulator
+  (`accPerHash`, PRECISION 1e12) integrated piecewise across halving
+  boundaries — no per-player loops, O(1) per action.
+- **Referral tier rates are based on volume accrued *before* the current
+  claim**, so a single large claim can't bump its own payout tier.
+- **The free T0 Hand Drill** is virtual (not an NFT), auto-placed at cell
+  (0,0) on entry, and cannot be removed.
+- **Buying/upgrading requires STACK approval** — the game pulls funds via
+  `burnFrom`/`transferFrom`. The frontend `useGame` hook auto-approves
+  (max allowance) before `buyMiner`/`upgradeFacility`.
+- **Cap clipping**: claims are clipped to `remainingMintable()`; emission
+  effectively ends when 100M total minted is reached.
+- **Token/NFT wiring is one-shot**: `setRefinery()` can only be called once
+  on each of StackToken and MinerNFT.
+
 ## Build Phases
 
 ### Phase 1: Frontend Skeleton [DONE]
@@ -225,23 +253,29 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [x] Generate decorative objects (conveyor, ore, terminal, tank, smelter, valve, sign, crane)
 - [x] Generate characters (refinery worker, foreman, drill bot)
 - [x] Generate additional UI panels (header, stats, shop, claim, referral, grid, enter, footer, docs)
-- [ ] Select best frames from review candidates
-- [ ] Download assets to frontend/src/assets/
-- [ ] Wire sprites into UI components
+- [x] Select best frames from review candidates
+- [x] Download assets to frontend/src/assets/
+- [x] Wire sprites into UI components
 
-### Phase 3: Solidity Contracts [NOT STARTED]
-- [ ] Set up Hardhat in contracts/ directory
-- [ ] Install OpenZeppelin contracts
-- [ ] Write StackToken.sol
-- [ ] Write MinerNFT.sol
-- [ ] Write StackRefinery.sol
-- [ ] Write deployment script
-- [ ] Write tests
-- [ ] Compile and verify
+### Phase 3: Solidity Contracts [DONE]
+- [x] Set up Hardhat in contracts/ directory (Hardhat 2.29, toolbox 5, TS pinned to 5.4.5 — newer TS breaks ts-node)
+- [x] Install OpenZeppelin contracts (v5.6)
+- [x] Write StackToken.sol (100M cap, 5M premint, burn counts against cap, refinery-only mint)
+- [x] Write MinerNFT.sol (ERC-721 Enumerable, tier + hashrate per token, refinery-only mint)
+- [x] Write StackRefinery.sol (entry, emission + halving, buy/place/remove miners, upgrades, referrals, pause, fee withdrawal)
+- [x] Write deployment script (scripts/deploy.ts — deploys all 3, wires refinery, prints frontend config)
+- [x] Write tests (test/StackRefinery.test.ts — 19 passing: cap, emission, halving boundary, referral routing/loops, grid/power limits, cooldowns, admin)
+- [x] Compile green (`npm run compile` / `npm test` in contracts/)
 
-### Phase 4: Wire Frontend to Contracts [NOT STARTED]
-- [ ] Update config.ts with deployed addresses
-- [ ] Test all contract interactions
+### Phase 4: Wire Frontend to Contracts [IN PROGRESS]
+- [x] Frontend builds clean (`npm run build` — fixed unused-import TS errors)
+- [x] ABI fragments match deployed contract signatures (incl. MINER_TIERS power field, facilityGridMask)
+- [x] Auto-approve STACK allowance before buyMiner/upgradeFacility
+- [x] placeMiner/removeMiner actions in useGame hook
+- [ ] Deploy contracts + update config.ts ADDRESSES (still zero addresses)
+- [ ] Grid placement UI: let the player pick a cell and call placeMiner with real coordinates (RefineryGrid currently renders occupancy heuristically from minerCount; use facilityGridMask + NFT enumeration)
+- [ ] Miner inventory panel (owned-but-unplaced rigs)
+- [ ] Test all contract interactions end-to-end on a testnet/local node
 - [ ] Polish UI based on real data
 - [ ] Add error handling and tx notifications
 
@@ -257,10 +291,13 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 ### Contracts
 ```bash
 cd contracts
-npx hardhat compile
-npx hardhat run scripts/deploy.ts --network robinhood
+npm install
+npm run compile
+npm test
+npm run deploy:robinhood   # needs DEPLOYER_PRIVATE_KEY (+ optional ROBINHOOD_RPC_URL, DEV_WALLET) in ../.env.local
 ```
-Private key and RPC URL in `.env.local` (gitignored).
+The deploy script wires token/NFT to the refinery and prints the three
+addresses to paste into `frontend/src/config.ts` ADDRESSES.
 
 ### Frontend
 ```bash

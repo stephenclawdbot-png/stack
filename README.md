@@ -10,10 +10,11 @@ cd frontend
 npm install
 npm run dev
 
-# Contracts (coming soon)
+# Contracts
 cd contracts
 npm install
-npx hardhat compile
+npm run compile
+npm test
 ```
 
 ## Game Loop

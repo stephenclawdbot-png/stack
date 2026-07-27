@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useWallet } from "./useWallet";
 import { getRefineryContract, getStackTokenContract, getMinerNFTContract } from "./contracts";
-import { ADDRESSES, CHAIN_ID } from "../config";
+import { ADDRESSES, CHAIN_ID, FACILITY_TIERS } from "../config";
 
 export interface GameState {
   hasFacility: boolean;
@@ -156,7 +156,38 @@ export function useGame() {
     }
   }, [wallet, refresh]);
 
-  const buyMiner = useCallback(async (tier: number) => {
+  // The refinery pulls STACK via burnFrom/transferFrom, so spending
+  // actions need a one-time max approval first.
+  const ensureAllowance = useCallback(async (signer: ethers.Signer, needed: bigint) => {
+    const token = getStackTokenContract(signer);
+    const owner = await signer.getAddress();
+    const allowance: bigint = await token.allowance(owner, ADDRESSES.refinery);
+    if (allowance < needed) {
+      const tx = await token.approve(ADDRESSES.refinery, ethers.MaxUint256);
+      await tx.wait();
+    }
+  }, []);
+
+  const buyMiner = useCallback(async (tier: number, priceStack: number) => {
+    if (!wallet.address) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const signer = await wallet.getSigner();
+      if (!signer) throw new Error("No signer");
+      await ensureAllowance(signer, ethers.parseUnits(priceStack.toString(), 18));
+      const refinery = getRefineryContract(signer);
+      const tx = await refinery.buyMiner(tier);
+      await tx.wait();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to buy miner");
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet, refresh, ensureAllowance]);
+
+  const placeMiner = useCallback(async (tokenId: number, x: number, y: number) => {
     if (!wallet.address) return;
     setLoading(true);
     setError(null);
@@ -164,11 +195,29 @@ export function useGame() {
       const signer = await wallet.getSigner();
       if (!signer) throw new Error("No signer");
       const refinery = getRefineryContract(signer);
-      const tx = await refinery.buyMiner(tier);
+      const tx = await refinery.placeMiner(tokenId, x, y);
       await tx.wait();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to buy miner");
+      setError(err instanceof Error ? err.message : "Failed to place miner");
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet, refresh]);
+
+  const removeMiner = useCallback(async (tokenId: number) => {
+    if (!wallet.address) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const signer = await wallet.getSigner();
+      if (!signer) throw new Error("No signer");
+      const refinery = getRefineryContract(signer);
+      const tx = await refinery.removeMiner(tokenId);
+      await tx.wait();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove miner");
     } finally {
       setLoading(false);
     }
@@ -181,6 +230,10 @@ export function useGame() {
     try {
       const signer = await wallet.getSigner();
       if (!signer) throw new Error("No signer");
+      if (state) {
+        const nextCost = FACILITY_TIERS[state.facilityTier]?.upgradeCost ?? 0;
+        await ensureAllowance(signer, ethers.parseUnits(nextCost.toString(), 18));
+      }
       const refinery = getRefineryContract(signer);
       const tx = await refinery.upgradeFacility();
       await tx.wait();
@@ -222,6 +275,8 @@ export function useGame() {
     enterFacility,
     claimRewards,
     buyMiner,
+    placeMiner,
+    removeMiner,
     upgradeFacility,
     createReferralCode,
   };

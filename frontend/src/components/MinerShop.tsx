@@ -6,7 +6,7 @@ import { minerSprites } from "../assets";
 
 interface MinerShopProps {
   stackBalance: number;
-  onBuy: (tier: number) => void;
+  onBuy: (tier: number, priceStack: number) => void;
   loading: boolean;
 }
 
@@ -56,7 +56,7 @@ export function MinerShop({ stackBalance, onBuy, loading }: MinerShopProps) {
       </div>
       {selected !== null && (
         <button
-          onClick={() => onBuy(selected)}
+          onClick={() => onBuy(selected, MINER_TIERS[selected].price)}
           disabled={loading || stackBalance < MINER_TIERS[selected].price}
           className="btn-primary w-full mt-3"
         >

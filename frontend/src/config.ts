@@ -63,7 +63,7 @@ export interface ReferralTier {
   id: number;
   name: string;
   rate: number; // percentage
-  threshold: number; // gross KITTY referred
+  threshold: number; // gross STACK referred
 }
 
 export const REFERRAL_TIERS: ReferralTier[] = [
