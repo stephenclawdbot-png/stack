@@ -1,8 +1,11 @@
 import { ethers } from "ethers";
 
-export function formatStack(value: string | bigint, decimals = 18): string {
-  const formatted = ethers.formatUnits(value, decimals);
-  const num = parseFloat(formatted);
+// Takes human-readable STACK amounts (config numbers and useGame state are
+// already converted from wei) — NOT raw wei.
+export function formatStack(value: number | string): string {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (!isFinite(num)) return "0";
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(2) + "B";
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + "M";
   if (num >= 1_000) return (num / 1_000).toFixed(2) + "K";
   return num.toFixed(2);

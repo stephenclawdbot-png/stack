@@ -97,7 +97,7 @@ export function useGame() {
         referrer: refAddr,
         referredVolume: parseFloat(ethers.formatUnits(refVol, 18)),
         referralTier: Number(refTier),
-        emissionRatePerSec: Number(emissionRate),
+        emissionRatePerSec: parseFloat(ethers.formatUnits(emissionRate, 18)),
         nextHalving: Number(halving),
         lastUpgrade: Number(lastUpg),
         upgradeCooldown: Number(cooldown),
