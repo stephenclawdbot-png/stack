@@ -69,7 +69,7 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
         }}
       >
         <div
-          className="grid gap-1"
+          className="grid gap-0 bg-[#0c0e07]"
           style={{ gridTemplateColumns: `repeat(${tier.gridSize}, 1fr)` }}
         >
           {grid.map((_, idx) => {
@@ -79,12 +79,12 @@ export function RefineryGrid({ state, onUpgrade, loading }: RefineryGridProps) {
               <button
                 key={idx}
                 onClick={() => !occupied && toggleCell(idx)}
-                className={`aspect-square flex items-center justify-center transition-colors duration-100 ${
+                className={`aspect-square flex items-center justify-center transition-colors duration-100 bg-[#0c0e07] ${
                   occupied
-                    ? "bg-[#0c0e07]/95 [box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.25)]"
+                    ? "[box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.35)]"
                     : selected
-                      ? "bg-[#0c0e07]/95 [box-shadow:inset_0_0_0_2px_#9dff5e]"
-                      : "bg-[#0c0e07]/80 [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.06)] hover:bg-[#0c0e07]/95 hover:[box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.5)]"
+                      ? "[box-shadow:inset_0_0_0_2px_#9dff5e]"
+                      : "[box-shadow:inset_0_0_0_1px_#2a2f1a] hover:[box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.55)] hover:bg-[#12150c]"
                 }`}
               >
                 {occupied ? (
