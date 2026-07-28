@@ -30,22 +30,22 @@ export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelPr
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* The claim console — the art IS the button */}
+      {/* The claim console — art on top, LED readout in normal flow below
+          so it can never overflow the artwork at any viewport width */}
       <button
         onClick={onClaim}
         disabled={disabled}
-        className="relative block w-full group disabled:cursor-not-allowed"
+        className="block w-full group disabled:cursor-not-allowed"
         title={onCooldown ? `Claim available in ${timeUntil(cooldownEnds)}` : "Claim pending STACK"}
       >
         <img
           src={uiPanels.claimPanel}
           alt="Claim console"
-          className={`w-full pixelated transition-none ${
+          className={`w-full max-w-md mx-auto pixelated transition-none ${
             disabled ? "saturate-50 brightness-90" : "claim-ready group-hover:brightness-110"
           }`}
         />
-        {/* LED readout on the console's lower plate */}
-        <div className="absolute left-[6%] right-[6%] bottom-[12%] bg-black/75 border border-accent/40 px-2 py-0.5 overflow-hidden text-center">
+        <div className="bg-black/80 border-2 border-accent/40 px-2 py-1 mt-1 overflow-hidden text-center">
           <span className="led-text text-base md:text-xl whitespace-nowrap tabular-nums">
             {loading
               ? "> PROCESSING..."
@@ -60,11 +60,11 @@ export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelPr
         <button
           onClick={() => onCompound(bestCompound.id)}
           disabled={loading}
-          className="btn-secondary w-full mt-2 !text-positive"
+          className="btn-secondary w-full mt-2 !text-positive truncate"
           title="Reinvest pending rewards without claiming — 10% cheaper, no cooldown"
         >
-          ⚡ Quick compound: {bestCompound.name} for{" "}
-          {formatStack(bestCompound.price * (1 - COMPOUND_DISCOUNT))} pending (-10%)
+          ⚡ Compound: {bestCompound.name} (-10%) —{" "}
+          {formatStack(bestCompound.price * (1 - COMPOUND_DISCOUNT))}
         </button>
       )}
 
