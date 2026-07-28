@@ -22,6 +22,12 @@ const MINER_NFT_ABI = [
   "function minerHashrate(uint256) view returns (uint256)",
 ];
 
+const REFINERY_EVENTS = [
+  "event RewardsClaimed(address indexed player, uint256 net, uint256 gross)",
+  "event MinerPurchased(address indexed player, uint8 tier, uint256 tokenId)",
+  "event FacilityUpgraded(address indexed player, uint8 newTier)",
+];
+
 const REFINERY_ABI = [
   "function entryFee() view returns (uint256)",
   "function hasFacility(address) view returns (bool)",
@@ -49,6 +55,7 @@ const REFINERY_ABI = [
   "function buyMiner(uint8)",
   "function compound(uint8)",
   "function placeMiner(uint256,uint8,uint8)",
+  "function placedTokens(address) view returns (uint256[])",
   "function removeMiner(uint256)",
   "function upgradeFacility()",
   "function createReferralCode(string)",
@@ -72,4 +79,4 @@ export function getRefineryContract(signerOrProvider: ethers.Signer | ethers.Pro
   return new ethers.Contract(ADDRESSES.refinery, REFINERY_ABI, signerOrProvider);
 }
 
-export { ERC20_ABI, MINER_NFT_ABI, REFINERY_ABI };
+export { ERC20_ABI, MINER_NFT_ABI, REFINERY_ABI, REFINERY_EVENTS };

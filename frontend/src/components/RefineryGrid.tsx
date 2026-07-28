@@ -48,6 +48,29 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
   const rigSprite = (idx: number) =>
     minerSprites[placedTiers?.[idx] ?? (idx === 0 ? 0 : 1)] ?? minerSprites[1];
 
+  // Client-side synergy estimate mirroring the contract rule: +10% per
+  // orthogonally adjacent occupied cell (max +30%) per rig.
+  const HASHRATES = [1, 5, 25, 100, 500];
+  const occupiedIdx = new Set(
+    Array.from({ length: state.minerCount }, (_, i) => i)
+  );
+  let baseSum = 0;
+  let effSum = 0;
+  occupiedIdx.forEach((i) => {
+    const x = i % tier.gridSize;
+    const y = Math.floor(i / tier.gridSize);
+    const neighbors = [
+      [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
+    ].filter(([nx, ny]) => {
+      if (nx < 0 || ny < 0 || nx >= tier.gridSize || ny >= tier.gridSize) return false;
+      return occupiedIdx.has(ny * tier.gridSize + nx);
+    }).length;
+    const base = HASHRATES[placedTiers?.[i] ?? (i === 0 ? 0 : 1)] ?? 5;
+    baseSum += base;
+    effSum += base * (1 + Math.min(neighbors, 3) * 0.1);
+  });
+  const synergyPct = baseSum > 0 ? (effSum / baseSum - 1) * 100 : 0;
+
   const upgradeAvailable = state.lastUpgrade > 0
     ? Date.now() / 1000 > state.lastUpgrade + state.upgradeCooldown
     : true;
@@ -68,9 +91,19 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
           <FactoryIcon className="w-5 h-5 text-accent" />
           {tier.name}
         </h3>
-        <span className="text-lg text-muted font-mono">
-          T{state.facilityTier} | {tier.gridSize}x{tier.gridSize} grid
-        </span>
+        <div className="flex items-center gap-3">
+          {synergyPct > 0 && (
+            <span
+              className="text-lg font-mono text-positive [text-shadow:0_0_8px_rgba(157,255,94,0.5)]"
+              title="Rigs touching each other mine +10% per neighbor (max +30%)"
+            >
+              SYNERGY +{synergyPct.toFixed(1)}%
+            </span>
+          )}
+          <span className="text-lg text-muted font-mono">
+            T{state.facilityTier} | {tier.gridSize}x{tier.gridSize}
+          </span>
+        </div>
       </div>
 
       {/* Power bar */}

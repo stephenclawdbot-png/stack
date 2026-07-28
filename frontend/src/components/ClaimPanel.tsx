@@ -1,17 +1,22 @@
 import type { GameState } from "../lib/useGame";
 import { useLivePending } from "../lib/useGame";
 import { formatStack, timeUntil } from "../lib/format";
-import { CLAIM_COOLDOWN } from "../config";
+import { CLAIM_COOLDOWN, COMPOUND_DISCOUNT, MINER_TIERS } from "../config";
 import { uiPanels } from "../assets";
 
 interface ClaimPanelProps {
   state: GameState;
   onClaim: () => void;
+  onCompound?: (tier: number) => void;
   loading: boolean;
 }
 
-export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
+export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelProps) {
   const livePending = useLivePending(state);
+  // best rig affordable straight from pending (the one-click reinvest beat)
+  const bestCompound = MINER_TIERS.filter(
+    (t) => t.id > 0 && livePending >= t.price * (1 - COMPOUND_DISCOUNT)
+  ).pop();
   const cooldownEnds = state.lastClaim + CLAIM_COOLDOWN;
   const onCooldown = Date.now() / 1000 < cooldownEnds;
   const disabled = loading || state.pendingRewards <= 0 || onCooldown;
@@ -49,6 +54,18 @@ export function ClaimPanel({ state, onClaim, loading }: ClaimPanelProps) {
           </span>
         </div>
       </button>
+
+      {onCompound && bestCompound && (
+        <button
+          onClick={() => onCompound(bestCompound.id)}
+          disabled={loading}
+          className="btn-secondary w-full mt-2 !text-positive"
+          title="Reinvest pending rewards without claiming — 10% cheaper, no cooldown"
+        >
+          ⚡ Quick compound: {bestCompound.name} for{" "}
+          {formatStack(bestCompound.price * (1 - COMPOUND_DISCOUNT))} pending (-10%)
+        </button>
+      )}
 
       <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 mt-2 text-lg text-muted text-center">
         <span>

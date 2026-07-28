@@ -6,6 +6,8 @@ import { RefineryGrid } from "../components/RefineryGrid";
 import { MinerShop } from "../components/MinerShop";
 import { ClaimPanel } from "../components/ClaimPanel";
 import { ReferralPanel } from "../components/ReferralPanel";
+import { NextGoals } from "../components/NextGoals";
+import { ActivityFeed } from "../components/ActivityFeed";
 
 // ?demo=1 renders the game board with mock state (design review / promo shots)
 const DEMO_STATE: GameState = {
@@ -40,18 +42,26 @@ export function GamePage() {
   if (isDemo) {
     const noop = () => {};
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <StatsBar state={DEMO_STATE} />
-        <ClaimPanel state={DEMO_STATE} onClaim={noop} loading={false} />
-        <div className="grid md:grid-cols-2 gap-4 items-start">
-          <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} placedTiers={[0, 1, 2]} />
-          <MinerShop
-            stackBalance={DEMO_STATE.stackBalance}
-            pendingRewards={DEMO_STATE.pendingRewards}
-            onBuy={noop}
-            onCompound={noop}
-            loading={false}
-          />
+        <NextGoals state={DEMO_STATE} />
+        <div className="grid lg:grid-cols-12 gap-4 items-start">
+          {/* The stage: your facility */}
+          <div className="lg:col-span-7">
+            <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} placedTiers={[0, 1, 2]} />
+          </div>
+          {/* The control column */}
+          <div className="lg:col-span-5 space-y-4">
+            <ClaimPanel state={DEMO_STATE} onClaim={noop} onCompound={noop} loading={false} />
+            <MinerShop
+              stackBalance={DEMO_STATE.stackBalance}
+              pendingRewards={DEMO_STATE.pendingRewards}
+              onBuy={noop}
+              onCompound={noop}
+              loading={false}
+            />
+            <ActivityFeed demo />
+          </div>
         </div>
         <ReferralPanel state={DEMO_STATE} onCreateCode={noop} loading={false} />
       </div>
@@ -118,18 +128,28 @@ export function GamePage() {
         )}
 
         <StatsBar state={game.state} />
+        <NextGoals state={game.state} />
 
-        <ClaimPanel state={game.state} onClaim={game.claimRewards} loading={game.loading} />
-
-        <div className="grid md:grid-cols-2 gap-4 items-start">
-          <RefineryGrid state={game.state} onUpgrade={game.upgradeFacility} loading={game.loading} />
-          <MinerShop
-            stackBalance={game.state.stackBalance}
-            pendingRewards={game.state.pendingRewards}
-            onBuy={game.buyMiner}
-            onCompound={game.compound}
-            loading={game.loading}
-          />
+        <div className="grid lg:grid-cols-12 gap-4 items-start">
+          <div className="lg:col-span-7">
+            <RefineryGrid state={game.state} onUpgrade={game.upgradeFacility} loading={game.loading} />
+          </div>
+          <div className="lg:col-span-5 space-y-4">
+            <ClaimPanel
+              state={game.state}
+              onClaim={game.claimRewards}
+              onCompound={game.compound}
+              loading={game.loading}
+            />
+            <MinerShop
+              stackBalance={game.state.stackBalance}
+              pendingRewards={game.state.pendingRewards}
+              onBuy={game.buyMiner}
+              onCompound={game.compound}
+              loading={game.loading}
+            />
+            <ActivityFeed />
+          </div>
         </div>
 
         <ReferralPanel

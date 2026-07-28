@@ -38,5 +38,6 @@ export function timeUntil(timestamp: number): string {
   if (diff <= 0) return "Ready";
   if (diff < 60) return Math.ceil(diff) + "s";
   if (diff < 3600) return Math.ceil(diff / 60) + "m";
-  return Math.ceil(diff / 3600) + "h";
+  if (diff < 172800) return Math.ceil(diff / 3600) + "h";
+  return Math.ceil(diff / 86400) + "d";
 }

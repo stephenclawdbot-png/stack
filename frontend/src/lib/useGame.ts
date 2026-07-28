@@ -114,8 +114,8 @@ export function useGame() {
         facilityGridSize: Number(gridSize),
         facilityPower: Number(power),
         facilityPowerUsed: Number(powerUsed),
-        playerHashrate: Number(playerHash),
-        totalNetworkHashrate: Number(networkHash),
+        playerHashrate: Number(playerHash) / 100, // centihash -> H/s
+        totalNetworkHashrate: Number(networkHash) / 100,
         pendingRewards: parseFloat(ethers.formatUnits(pending, 18)),
         totalRewardsPaid: parseFloat(ethers.formatUnits(rewardsPaid, 18)),
         totalBurned: parseFloat(ethers.formatUnits(burned, 18)),

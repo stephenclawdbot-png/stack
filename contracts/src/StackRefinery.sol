@@ -53,6 +53,14 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
     ///         than claiming and buying, and skips the referral carve-out.
     uint256 public constant COMPOUND_DISCOUNT_BPS = 1_000;
 
+    /// @notice Adjacency synergy: each occupied tile orthogonally touching
+    ///         a rig boosts that rig's hashrate 10%, up to +30%. Hashrate
+    ///         is accounted internally in centihash (base * 100) so the
+    ///         percentage math never floors away on small rigs.
+    uint256 public constant SYNERGY_PER_NEIGHBOR = 1; // x10%
+    uint256 public constant SYNERGY_MAX_NEIGHBORS = 3;
+    uint256 public constant HASH_SCALE = 100; // centihash
+
     uint256 public constant REFERRAL_CUT_BPS = 450; // total carve-out
     uint256 public constant TIER2_THRESHOLD = 500_000e18; // gross referred
     uint256 public constant TIER3_THRESHOLD = 2_500_000e18;
@@ -121,6 +129,7 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
 
     mapping(address => Facility) private facilities;
     mapping(uint256 => PlacedMiner) public placedMiners; // tokenId => placement
+    mapping(address => uint256[]) private _placedList; // player's placed tokenIds
 
     // Referrals
     mapping(address => string) private _referralCode; // wallet => code
@@ -337,8 +346,8 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         MinerTierInfo memory t0 = minerTiers[0];
         f.gridMask = 1; // bit 0 = cell (0,0)
         f.powerUsed = t0.power;
-        f.hashrate = t0.hashrate;
-        totalNetworkHashrate += t0.hashrate;
+        f.hashrate = t0.hashrate * HASH_SCALE;
+        totalNetworkHashrate += f.hashrate;
         f.rewardDebt = (f.hashrate * accPerHash) / PRECISION;
 
         emit FacilityOpened(msg.sender, ref);
@@ -391,11 +400,10 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
 
         f.gridMask |= mask;
         f.powerUsed += info.power;
-        f.hashrate += info.hashrate;
-        totalNetworkHashrate += info.hashrate;
-        f.rewardDebt = (f.hashrate * accPerHash) / PRECISION;
-
         placedMiners[tokenId] = PlacedMiner(msg.sender, x, y, uint64(block.timestamp));
+        _placedList[msg.sender].push(tokenId);
+        _refreshHashrate(msg.sender);
+
         emit MinerPlaced(msg.sender, tokenId, x, y);
     }
 
@@ -414,11 +422,17 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         Facility storage f = facilities[msg.sender];
         f.gridMask &= ~_footprint(p.x, p.y, side);
         f.powerUsed -= info.power;
-        f.hashrate -= info.hashrate;
-        totalNetworkHashrate -= info.hashrate;
-        f.rewardDebt = (f.hashrate * accPerHash) / PRECISION;
-
         delete placedMiners[tokenId];
+        uint256[] storage list = _placedList[msg.sender];
+        for (uint256 i = 0; i < list.length; i++) {
+            if (list[i] == tokenId) {
+                list[i] = list[list.length - 1];
+                list.pop();
+                break;
+            }
+        }
+        _refreshHashrate(msg.sender);
+
         emit MinerRemoved(msg.sender, tokenId);
     }
 
@@ -572,8 +586,14 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
         return facilities[player].gridMask;
     }
 
+    /// @notice Effective hashrate in centihash (base * 100, incl. synergy).
     function playerHashrate(address player) external view returns (uint256) {
         return facilities[player].hashrate;
+    }
+
+    /// @notice Token ids of the player's placed rigs (placement order).
+    function placedTokens(address player) external view returns (uint256[] memory) {
+        return _placedList[player];
     }
 
     function pendingRewards(address player) external view returns (uint256) {
@@ -676,5 +696,67 @@ contract StackRefinery is Ownable, Pausable, ReentrancyGuard {
                 mask |= uint64(1) << ((y + dy) * 8 + (x + dx));
             }
         }
+    }
+
+    /// @dev A rig's centihash after adjacency synergy: +10% per occupied
+    ///      tile orthogonally touching its footprint, capped at +30%.
+    function _rigEffective(
+        uint256 baseCenti,
+        uint8 x,
+        uint8 y,
+        uint8 side,
+        uint64 mask
+    ) internal pure returns (uint256) {
+        uint64 fp = _footprint(x, y, side);
+        uint256 adj;
+        for (uint8 dy = 0; dy < side; dy++) {
+            for (uint8 dx = 0; dx < side; dx++) {
+                uint8 cx = x + dx;
+                uint8 cy = y + dy;
+                // 4-neighborhood of this footprint cell
+                if (cx > 0 && _occupiedOutside(mask, fp, cx - 1, cy)) adj++;
+                if (cx < 7 && _occupiedOutside(mask, fp, cx + 1, cy)) adj++;
+                if (cy > 0 && _occupiedOutside(mask, fp, cx, cy - 1)) adj++;
+                if (cy < 7 && _occupiedOutside(mask, fp, cx, cy + 1)) adj++;
+            }
+        }
+        if (adj > SYNERGY_MAX_NEIGHBORS) adj = SYNERGY_MAX_NEIGHBORS;
+        return (baseCenti * (10 + adj * SYNERGY_PER_NEIGHBOR)) / 10;
+    }
+
+    function _occupiedOutside(uint64 mask, uint64 fp, uint8 cx, uint8 cy)
+        internal
+        pure
+        returns (bool)
+    {
+        uint64 bit = uint64(1) << (cy * 8 + cx);
+        return (mask & bit != 0) && (fp & bit == 0);
+    }
+
+    /// @dev Total effective centihash for a player's facility: the hand
+    ///      drill at (0,0) plus every placed rig, each with synergy.
+    function _effectiveHashrate(address player) internal view returns (uint256 eff) {
+        Facility storage f = facilities[player];
+        uint64 mask = f.gridMask;
+        // hand drill: base 1, occupies (0,0)
+        eff = _rigEffective(minerTiers[0].hashrate * HASH_SCALE, 0, 0, 1, mask);
+        uint256[] storage list = _placedList[player];
+        for (uint256 i = 0; i < list.length; i++) {
+            uint256 tid = list[i];
+            PlacedMiner memory p = placedMiners[tid];
+            MinerTierInfo memory info = minerTiers[minerNFT.minerTier(tid)];
+            uint8 side = info.cells == 4 ? 2 : 1;
+            eff += _rigEffective(info.hashrate * HASH_SCALE, p.x, p.y, side, mask);
+        }
+    }
+
+    /// @dev Re-derive a player's effective hashrate after a grid change.
+    ///      MUST be called after _settle so past accrual uses old rates.
+    function _refreshHashrate(address player) internal {
+        Facility storage f = facilities[player];
+        uint256 newHash = _effectiveHashrate(player);
+        totalNetworkHashrate = totalNetworkHashrate - f.hashrate + newHash;
+        f.hashrate = newHash;
+        f.rewardDebt = (newHash * accPerHash) / PRECISION;
     }
 }

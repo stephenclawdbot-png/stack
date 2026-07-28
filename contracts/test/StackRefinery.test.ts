@@ -65,8 +65,8 @@ describe("Stack Refinery (treasury model)", () => {
       expect(await refinery.hasFacility(alice.address)).to.equal(true);
       expect(await refinery.facilityTier(alice.address)).to.equal(1);
       expect(await refinery.facilityGridSize(alice.address)).to.equal(2);
-      expect(await refinery.playerHashrate(alice.address)).to.equal(1);
-      expect(await refinery.totalNetworkHashrate()).to.equal(1);
+      expect(await refinery.playerHashrate(alice.address)).to.equal(100); // centihash
+      expect(await refinery.totalNetworkHashrate()).to.equal(100);
       expect(await refinery.facilityPowerUsed(alice.address)).to.equal(1);
     });
 
@@ -235,7 +235,7 @@ describe("Stack Refinery (treasury model)", () => {
       expect((poolBefore - await refinery.rewardPool())).to.equal(ethers.parseEther("675"));
       // rig is placeable like any purchased miner
       await refinery.connect(alice).placeMiner(1, 1, 0);
-      expect(await refinery.playerHashrate(alice.address)).to.equal(6);
+      expect(await refinery.playerHashrate(alice.address)).to.equal(660);
     });
 
     it("rejects self-referral and 2-wallet loops", async () => {
@@ -295,7 +295,8 @@ describe("Stack Refinery (treasury model)", () => {
       await refinery.connect(alice).buyMiner(1);
       await refinery.connect(alice).placeMiner(1, 1, 0);
 
-      expect(await refinery.playerHashrate(alice.address)).to.equal(6); // 1 + 5
+      // synergy: drill (1 neighbor) 110 + T1 (1 neighbor) 550 = 660 centihash
+      expect(await refinery.playerHashrate(alice.address)).to.equal(660);
       expect(await refinery.facilityPowerUsed(alice.address)).to.equal(4); // 1 + 3
       await refinery.connect(alice).buyMiner(1);
       await expect(
@@ -320,6 +321,23 @@ describe("Stack Refinery (treasury model)", () => {
       ).to.be.revertedWithCustomError(refinery, "PowerExceeded");
     });
 
+    it("adjacency synergy: touching rigs earn +10% per neighbor tile", async () => {
+      const { refinery, alice } = await fundedPlayer();
+      await refinery.connect(alice).buyMiner(1);
+      // diagonal placement: no orthogonal contact with the (0,0) hand drill
+      await refinery.connect(alice).placeMiner(1, 1, 1);
+      // drill 100 (0 neighbors) + T1 500 (0 neighbors)
+      expect(await refinery.playerHashrate(alice.address)).to.equal(600);
+
+      // re-seat it orthogonally next to the drill
+      await time.increase(DAY + 1);
+      await refinery.connect(alice).removeMiner(1);
+      await refinery.connect(alice).placeMiner(1, 1, 0);
+      // drill 110 (1 neighbor) + T1 550 (1 neighbor)
+      expect(await refinery.playerHashrate(alice.address)).to.equal(660);
+      expect((await refinery.placedTokens(alice.address)).length).to.equal(1);
+    });
+
     it("removeMiner enforces the 24h cooldown then frees the cell", async () => {
       const { refinery, alice } = await fundedPlayer();
       await refinery.connect(alice).buyMiner(1);
@@ -328,7 +346,7 @@ describe("Stack Refinery (treasury model)", () => {
         refinery, "Cooldown");
       await time.increase(DAY + 1);
       await refinery.connect(alice).removeMiner(1);
-      expect(await refinery.playerHashrate(alice.address)).to.equal(1);
+      expect(await refinery.playerHashrate(alice.address)).to.equal(100);
       await refinery.connect(alice).placeMiner(1, 1, 0);
     });
   });

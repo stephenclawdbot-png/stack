@@ -104,7 +104,11 @@ export function DocsPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted mt-2">Facility upgrades have a 24h cooldown.</p>
+        <p className="text-xs text-muted mt-2">
+          Facility upgrades have a 24h cooldown. Placement matters: rigs touching each
+          other mine +10% per adjacent occupied tile (max +30%) — pack your grid for
+          maximum synergy.
+        </p>
       </section>
 
       <section>

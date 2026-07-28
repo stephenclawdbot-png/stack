@@ -86,6 +86,20 @@ stack-refinery/
 - **Burn**: 75% of miner purchases sent to 0xdEaD forever, 25% recycles
   into the reward pool (launchpad tokens have no burn function)
 
+### Adjacency synergy (the placement game)
+- Every occupied tile orthogonally touching a rig boosts that rig's
+  hashrate by 10%, capped at +30% (SYNERGY_PER_NEIGHBOR /
+  SYNERGY_MAX_NEIGHBORS in StackRefinery.sol). Computed on-chain on every
+  place/remove via `_refreshHashrate` (per-player only — masks are
+  per-facility, so no cross-player recompute).
+- Hashrate is accounted internally in **centihash** (base × 100,
+  HASH_SCALE) so percentage bonuses never floor away; `playerHashrate` /
+  `totalNetworkHashrate` views return centihash and the frontend divides
+  by 100 for display.
+- `placedTokens(address)` view returns the player's placed rig ids.
+- Design intent: turns the grid from decoration into a spatial puzzle
+  (cluster for synergy vs. fit 2x2 rigs vs. power limits).
+
 ### Sustainability mechanics (ours — KittyMining doesn't have these)
 - **Runway guard**: effective emission = min(halving schedule,
   rewardPool / 60 days), recomputed at every interaction. The pool
@@ -304,7 +318,8 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [x] Write StackRefinery.sol (entry, emission + halving, treasury-paid rewards with pool clipping, fundRewards, buy/place/remove miners with 0xdEaD burns, upgrades, referrals, pause, fee withdrawal)
 - [x] Sustainability mechanics: 60-day runway guard on emission, compound(tier) at 10% discount, 1h claim cooldown
 - [x] Write deployment script (scripts/deploy.ts — takes STACK_TOKEN_ADDRESS, deploys NFT+refinery, wires, prints frontend config; auto-deploys MockStack on non-mainnet)
-- [x] Write tests (test/StackRefinery.test.ts — 22 passing: treasury funding, runway throttle + refund recovery, compound, claim cooldown, emission, halving boundary, referral routing/loops, dead-address burns, grid/power limits, cooldowns, admin)
+- [x] Write tests (test/StackRefinery.test.ts — 23 passing: treasury funding, runway throttle + refund recovery, compound, claim cooldown, adjacency synergy, emission, halving boundary, referral routing/loops, dead-address burns, grid/power limits, cooldowns, admin)
+- [x] Adjacency synergy mechanic (+10%/neighbor tile, cap +30%, centihash accounting)
 - [x] Compile green (`npm run compile` / `npm test` in contracts/)
 
 ### Phase 4: Wire Frontend to Contracts [IN PROGRESS]
@@ -318,6 +333,17 @@ Generated via PixelLab API. All tagged `stack-refinery` for filtering.
 - [ ] Test all contract interactions end-to-end on a testnet/local node
 - [ ] Polish UI based on real data
 - [ ] Add error handling and tx notifications
+
+### Game design roadmap (not yet built — ideas vetted, in priority order)
+- Animated rig sprites via PixelLab animate_object (pump jack pumping,
+  excavator digging) — biggest visual win for remaining generation budget
+- Claim burst animation (bottlecaps exploding from the console on claim)
+- Retro terminal SFX (clicks, geiger ticks on claim) with a mute toggle
+- Leaderboard page from RewardsClaimed events (client-side indexing, no
+  backend) — top claimers / top hashrate
+- Overclock/prestige sink for endgame (burn STACK to permanently boost a
+  facility slot) — needs contract work + economy modelling first
+- Seasons: periodic fresh boards with archived leaderboards
 
 ### Phase 5: Deploy [NOT STARTED]
 - [ ] Launch STACK on ponz.family (1B fixed supply) + dev-buy the game treasury allocation on the curve
