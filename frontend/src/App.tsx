@@ -65,11 +65,11 @@ export default function App() {
             alt="Stack Boy"
             className="absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated mascot-idle drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)]"
           />
-          <div className="absolute left-28 md:left-44 right-3 bottom-2 md:bottom-3 [text-shadow:2px_2px_0_#000]">
-            <div className="font-heading text-sm md:text-xl text-accent">
+          <div className="absolute left-24 sm:left-28 md:left-44 right-2 bottom-2 md:bottom-3 [text-shadow:2px_2px_0_#000] overflow-hidden">
+            <div className="font-heading text-xs sm:text-sm md:text-xl text-accent whitespace-nowrap">
               STACK REFINERY
             </div>
-            <div className="text-lg md:text-2xl text-text font-mono -mt-0.5">
+            <div className="text-base sm:text-lg md:text-2xl text-text font-mono -mt-0.5 truncate">
               A STACK-TEC™ FACILITY — building a brighter yield
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function App() {
         className="pixelated"
         style={{ backgroundImage: `url(${uiPanels.footerBar})`, backgroundSize: "100% 100%" }}
       >
-        <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between text-lg">
+        <div className="max-w-6xl mx-auto px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-1 text-base sm:text-lg text-center">
           <span className="font-mono text-text [text-shadow:2px_2px_0_#000]">
             STACK-TEC™ INDUSTRIES // ROBINHOOD CHAIN
           </span>

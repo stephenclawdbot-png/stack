@@ -21,10 +21,11 @@ export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelPr
   const onCooldown = Date.now() / 1000 < cooldownEnds;
   const disabled = loading || state.pendingRewards <= 0 || onCooldown;
 
-  // full precision so the tick-up is visible every second
+  // enough precision to see the tick-up, compact enough to fit the console
+  const decimals = livePending >= 100_000 ? 0 : livePending >= 1_000 ? 1 : 2;
   const liveText = livePending.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   });
 
   return (
@@ -44,8 +45,8 @@ export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelPr
           }`}
         />
         {/* LED readout on the console's lower plate */}
-        <div className="absolute left-[18%] right-[18%] bottom-[13%] bg-black/70 border border-accent/40 px-2 py-0.5">
-          <span className="led-text text-xl md:text-2xl whitespace-nowrap tabular-nums">
+        <div className="absolute left-[6%] right-[6%] bottom-[12%] bg-black/75 border border-accent/40 px-2 py-0.5 overflow-hidden text-center">
+          <span className="led-text text-base md:text-xl whitespace-nowrap tabular-nums">
             {loading
               ? "> PROCESSING..."
               : onCooldown

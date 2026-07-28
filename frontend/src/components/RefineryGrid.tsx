@@ -126,7 +126,7 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
 
       {/* Grid — drawn inside the workshop board art (inner field is ~12% inset) */}
       <div
-        className="relative pixelated aspect-square max-w-sm mx-auto"
+        className="relative pixelated aspect-square max-w-md mx-auto"
         style={{
           backgroundImage: `url(${uiPanels.gridPanel})`,
           backgroundSize: "100% 100%",

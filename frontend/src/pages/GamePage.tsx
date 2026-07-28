@@ -47,8 +47,9 @@ export function GamePage() {
         <NextGoals state={DEMO_STATE} />
         <div className="grid lg:grid-cols-12 gap-4 items-start">
           {/* The stage: your facility */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 space-y-4">
             <RefineryGrid state={DEMO_STATE} onUpgrade={noop} loading={false} placedTiers={[0, 1, 2]} />
+            <ActivityFeed demo />
           </div>
           {/* The control column */}
           <div className="lg:col-span-5 space-y-4">
@@ -60,7 +61,6 @@ export function GamePage() {
               onCompound={noop}
               loading={false}
             />
-            <ActivityFeed demo />
           </div>
         </div>
         <ReferralPanel state={DEMO_STATE} onCreateCode={noop} loading={false} />
@@ -131,8 +131,9 @@ export function GamePage() {
         <NextGoals state={game.state} />
 
         <div className="grid lg:grid-cols-12 gap-4 items-start">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 space-y-4">
             <RefineryGrid state={game.state} onUpgrade={game.upgradeFacility} loading={game.loading} />
+            <ActivityFeed />
           </div>
           <div className="lg:col-span-5 space-y-4">
             <ClaimPanel
@@ -148,7 +149,6 @@ export function GamePage() {
               onCompound={game.compound}
               loading={game.loading}
             />
-            <ActivityFeed />
           </div>
         </div>
 
