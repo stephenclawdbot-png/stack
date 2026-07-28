@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { playBlip, isMuted, toggleMute } from "./lib/sound";
 import { ConnectButton } from "./components/ConnectButton";
 import { GamePage } from "./pages/GamePage";
 import { DocsPage } from "./pages/DocsPage";
@@ -11,12 +12,33 @@ type Page = "game" | "docs" | "about" | "referral";
 
 export default function App() {
   const [page, setPage] = useState<Page>("game");
+  const [muted, setMuted] = useState(isMuted());
+  const [celebrating, setCelebrating] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash.slice(1) as Page;
     if (["game", "docs", "about", "referral"].includes(hash)) {
       setPage(hash);
     }
+  }, []);
+
+  // every button click gets a retro blip
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if ((e.target as HTMLElement | null)?.closest("button")) playBlip();
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
+
+  // Stack Boy celebrates claims
+  useEffect(() => {
+    const onClaim = () => {
+      setCelebrating(true);
+      window.setTimeout(() => setCelebrating(false), 1400);
+    };
+    window.addEventListener("stack:claimed", onClaim);
+    return () => window.removeEventListener("stack:claimed", onClaim);
   }, []);
 
   const goTo = (p: Page) => {
@@ -42,7 +64,16 @@ export default function App() {
             <LinkButton active={page === "about"} onClick={() => goTo("about")} icon={<InfoIcon className="w-4 h-4" />} label="About" />
           </nav>
 
-          <ConnectButton />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMuted(toggleMute())}
+              className="w-9 h-9 flex items-center justify-center text-lg border-2 border-border hover:border-accent pixel-corners"
+              title={muted ? "Unmute sounds" : "Mute sounds"}
+            >
+              {muted ? "🔇" : "🔊"}
+            </button>
+            <ConnectButton />
+          </div>
         </div>
 
         <div className="md:hidden border-t border-border px-4 py-2 flex gap-1 overflow-x-auto">
@@ -61,9 +92,11 @@ export default function App() {
         >
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
           <img
-            src={brand.mascot}
+            src={celebrating ? brand.mascotJump : brand.mascot}
             alt="Stack Boy"
-            className="absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated mascot-idle drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)]"
+            className={`absolute left-2 md:left-6 bottom-0 h-24 md:h-32 pixelated drop-shadow-[3px_3px_0_rgba(0,0,0,0.6)] ${
+              celebrating ? "" : "mascot-idle"
+            }`}
           />
           <div className="absolute left-24 sm:left-28 md:left-44 right-2 bottom-2 md:bottom-3 [text-shadow:2px_2px_0_#000] overflow-hidden">
             <div className="font-heading text-xs sm:text-sm md:text-xl text-accent whitespace-nowrap">

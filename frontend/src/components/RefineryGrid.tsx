@@ -3,7 +3,9 @@ import type { GameState } from "../lib/useGame";
 import { FACILITY_TIERS } from "../config";
 import { FactoryIcon } from "./Icons";
 import { formatStack, timeUntil } from "../lib/format";
-import { minerSprites, uiPanels, sprites } from "../assets";
+import { minerSprites, minerAnimFrames, uiPanels, sprites } from "../assets";
+import { AnimatedSprite } from "./AnimatedSprite";
+import { playThunk } from "../lib/sound";
 
 interface RefineryGridProps {
   state: GameState;
@@ -17,6 +19,8 @@ interface Particle {
   id: number;
   left: number;
   top: number;
+  text?: string;
+  spark?: boolean;
 }
 
 export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: RefineryGridProps) {
@@ -84,6 +88,25 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
     setSelectedCells(next);
   };
 
+  // Tapping a working rig: clank + sparks + a little +STACK pop. Pure
+  // cookie-clicker dopamine, zero on-chain cost.
+  const pokeRig = (idx: number) => {
+    playThunk();
+    const x = idx % tier.gridSize;
+    const y = Math.floor(idx / tier.gridSize);
+    const left = 14 + ((x + 0.5) / tier.gridSize) * 66;
+    const top = 12 + ((y + 0.35) / tier.gridSize) * 66;
+    const burst: Particle[] = [
+      { id: Date.now(), left, top, spark: true, text: "✦" },
+      { id: Date.now() + 1, left: left + 4, top: top - 4, text: "+STACK" },
+    ];
+    setParticles((ps) => [...ps.slice(-6), ...burst]);
+    window.setTimeout(
+      () => setParticles((ps) => ps.filter((q) => !burst.some((b) => b.id === q.id))),
+      1400
+    );
+  };
+
   return (
     <div className="frame-metal">
       <div className="flex items-center justify-between mb-3">
@@ -143,7 +166,7 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
             return (
               <button
                 key={idx}
-                onClick={() => !occupied && toggleCell(idx)}
+                onClick={() => (occupied ? pokeRig(idx) : toggleCell(idx))}
                 className={`aspect-square flex items-center justify-center transition-colors duration-100 bg-[#0c0e07] ${
                   occupied
                     ? "[box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.35)]"
@@ -152,13 +175,20 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
                       : "[box-shadow:inset_0_0_0_1px_#2a2f1a] hover:[box-shadow:inset_0_0_0_2px_rgba(253,180,42,0.55)] hover:bg-[#12150c]"
                 }`}
               >
-                {occupied ? (
-                  <img
-                    src={rigSprite(idx)}
-                    alt="miner"
-                    className="w-[88%] h-[88%] pixelated object-contain anim-mine drop-shadow-[0_0_6px_rgba(253,180,42,0.45)]"
-                  />
-                ) : selected ? (
+                {occupied ? (() => {
+                  const frames =
+                    minerAnimFrames[placedTiers?.[idx] ?? (idx === 0 ? 0 : 1)] ?? [rigSprite(idx)];
+                  return (
+                    <AnimatedSprite
+                      frames={frames}
+                      fps={6}
+                      alt="miner"
+                      className={`w-[88%] h-[88%] pixelated object-contain drop-shadow-[0_0_6px_rgba(253,180,42,0.45)] ${
+                        frames.length < 2 ? "anim-mine" : ""
+                      }`}
+                    />
+                  );
+                })() : selected ? (
                   <div className="w-2 h-2 bg-secondary" />
                 ) : (
                   <span className="text-lg text-white/15 font-mono">+</span>
@@ -170,10 +200,10 @@ export function RefineryGrid({ state, onUpgrade, loading, placedTiers }: Refiner
         {particles.map((p) => (
           <span
             key={p.id}
-            className="particle-float led-text"
+            className={p.spark ? "spark-pop" : "particle-float led-text"}
             style={{ left: `${p.left}%`, top: `${p.top}%` }}
           >
-            +STACK
+            {p.text ?? "+STACK"}
           </span>
         ))}
         <img src={sprites.pipeValve} alt="" className="absolute -bottom-1 -left-1 w-7 pixelated" />

@@ -36,6 +36,26 @@ import wastelandBanner from "../assets/brand/wasteland-banner.png";
 
 export const minerSprites = [t0, t1, t2, t3, t4];
 
+// Working-loop animation frames per tier (PixelLab animate_object, 7
+// frames each). T0 has no animation — single static frame, CSS jitter.
+const animModules = import.meta.glob("./sprites/anim/t*/*.png", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+
+export const minerAnimFrames: string[][] = [[t0], [t1], [t2], [t3], [t4]];
+for (let tier = 1; tier <= 4; tier++) {
+  const frames = Object.entries(animModules)
+    .filter(([p]) => p.includes(`/t${tier}/`))
+    .sort(([a], [b]) => {
+      const na = parseInt(a.match(/(\d+)\.png$/)?.[1] ?? "0", 10);
+      const nb = parseInt(b.match(/(\d+)\.png$/)?.[1] ?? "0", 10);
+      return na - nb;
+    })
+    .map(([, url]) => url);
+  if (frames.length > 0) minerAnimFrames[tier] = frames;
+}
+
 export const sprites = {
   t0HandDrill: t0,
   t1DrillRig: t1,

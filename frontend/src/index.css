@@ -255,6 +255,25 @@
     animation: ready-glow 1.8s ease-in-out infinite;
   }
 
+  .cap-particle {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+    z-index: 20;
+    animation: cap-fly 0.9s steps(9) forwards;
+  }
+
+  .spark-pop {
+    position: absolute;
+    pointer-events: none;
+    z-index: 15;
+    font-size: 20px;
+    color: #ffd23e;
+    text-shadow: 0 0 8px rgba(253, 180, 42, 0.9);
+    animation: spark-pop 0.5s steps(5) forwards;
+  }
+
   /* Terminal-style input */
   .input-terminal {
     @apply font-mono text-accent bg-black/60 w-full;
@@ -294,6 +313,22 @@
   0% { opacity: 0; transform: translateY(0) scale(0.8); }
   20% { opacity: 0.55; }
   100% { opacity: 0; transform: translateY(-48px) scale(1.6); }
+}
+
+/* bottlecaps exploding from the claim console */
+@keyframes cap-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 0px), var(--dy, -80px)) rotate(var(--rot, 540deg)) scale(0.6);
+  }
+}
+
+/* quick spark when tapping a working rig */
+@keyframes spark-pop {
+  0% { opacity: 1; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 0; transform: scale(0.9) translateY(-10px); }
 }
 
 @keyframes ready-glow {

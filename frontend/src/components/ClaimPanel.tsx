@@ -1,8 +1,10 @@
+import { useState } from "react";
 import type { GameState } from "../lib/useGame";
 import { useLivePending } from "../lib/useGame";
 import { formatStack, timeUntil } from "../lib/format";
 import { CLAIM_COOLDOWN, COMPOUND_DISCOUNT, MINER_TIERS } from "../config";
-import { uiPanels } from "../assets";
+import { uiPanels, brand } from "../assets";
+import { playChime } from "../lib/sound";
 
 interface ClaimPanelProps {
   state: GameState;
@@ -13,6 +15,22 @@ interface ClaimPanelProps {
 
 export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelProps) {
   const livePending = useLivePending(state);
+  const [caps, setCaps] = useState<{ id: number; dx: number; dy: number; rot: number }[]>([]);
+
+  // bottlecaps explode from the console + mascot celebrates
+  const handleClaim = () => {
+    playChime();
+    const burst = Array.from({ length: 9 }, (_, i) => ({
+      id: Date.now() + i,
+      dx: (Math.random() - 0.5) * 260,
+      dy: -40 - Math.random() * 130,
+      rot: (Math.random() - 0.5) * 1440,
+    }));
+    setCaps(burst);
+    window.setTimeout(() => setCaps([]), 1000);
+    window.dispatchEvent(new CustomEvent("stack:claimed"));
+    onClaim();
+  };
   // best rig affordable straight from pending (the one-click reinvest beat)
   const bestCompound = MINER_TIERS.filter(
     (t) => t.id > 0 && livePending >= t.price * (1 - COMPOUND_DISCOUNT)
@@ -33,11 +51,24 @@ export function ClaimPanel({ state, onClaim, onCompound, loading }: ClaimPanelPr
       {/* The claim console — art on top, LED readout in normal flow below
           so it can never overflow the artwork at any viewport width */}
       <button
-        onClick={onClaim}
+        onClick={handleClaim}
         disabled={disabled}
-        className="block w-full group disabled:cursor-not-allowed"
+        className="relative block w-full group disabled:cursor-not-allowed"
         title={onCooldown ? `Claim available in ${timeUntil(cooldownEnds)}` : "Claim pending STACK"}
       >
+        {caps.map((c) => (
+          <img
+            key={c.id}
+            src={brand.bottlecap}
+            alt=""
+            className="cap-particle pixelated left-1/2 top-1/3"
+            style={{
+              "--dx": `${c.dx}px`,
+              "--dy": `${c.dy}px`,
+              "--rot": `${c.rot}deg`,
+            } as React.CSSProperties}
+          />
+        ))}
         <img
           src={uiPanels.claimPanel}
           alt="Claim console"
